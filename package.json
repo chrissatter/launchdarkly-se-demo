@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "ld:setup": "node scripts/setup-launchdarkly.mjs"
+    "ld:setup": "node scripts/setup-launchdarkly.mjs",
+    "ld:cleanup": "node scripts/cleanup-launchdarkly.mjs"
   },
   "dependencies": {
     "launchdarkly-react-client-sdk": "^3.8.0",

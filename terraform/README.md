@@ -86,6 +86,30 @@ cd ..
 npm run dev
 ```
 
+## Cleanup
+
+When you are done testing the Terraform path, destroy the LaunchDarkly resources from this directory:
+
+```bash
+cd terraform
+export TF_VAR_launchdarkly_access_token="api-..."
+terraform destroy
+```
+
+If you used custom project or environment keys during `apply`, pass the same values to `destroy`:
+
+```bash
+terraform destroy \
+  -var="project_key=my-project" \
+  -var="environment_key=test"
+```
+
+Terraform only removes resources it manages in state. If you also ran the REST setup script, return to the repo root and use:
+
+```bash
+npm run ld:cleanup
+```
+
 ## Reviewer Talk Track
 
 Use this as the integration story:

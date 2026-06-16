@@ -31,6 +31,7 @@ landing-page-cta-clicked
 - [Alternative Setup Paths](#alternative-setup-paths)
   - [Manual UI Setup](#manual-ui-setup)
   - [Terraform Setup](#terraform-setup)
+- [Cleanup](#cleanup)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
@@ -420,6 +421,54 @@ experiment cohort targeting
 client-side SDK availability
 environment-level default/off behavior
 ```
+
+## Cleanup
+
+Use the cleanup path that matches how you created the LaunchDarkly resources.
+
+For the REST API setup, first stop or archive any experiment that references `new-landing-page-hero` or `landing-page-cta-clicked`. Then run a dry run:
+
+```bash
+export LD_API_TOKEN="api-..."
+export LD_PROJECT_KEY="default"
+export LD_ENV_KEY="test"
+npm run ld:cleanup
+```
+
+If the dry run lists only the demo resources you want to remove, rerun with confirmation:
+
+```bash
+export LD_CLEANUP_CONFIRM=delete-demo-resources
+npm run ld:cleanup
+```
+
+The cleanup script deletes:
+
+```text
+landing-page-cta-clicked
+support-chatbot-ai-config
+new-landing-page-hero
+```
+
+It does not delete your LaunchDarkly project, environment, API token, or local `.env` file.
+
+For the Terraform setup, destroy from the Terraform working directory:
+
+```bash
+cd terraform
+export TF_VAR_launchdarkly_access_token="api-..."
+terraform destroy
+```
+
+If you overrode `project_key` or `environment_key` during `apply`, pass the same values to `destroy`:
+
+```bash
+terraform destroy \
+  -var="project_key=my-project" \
+  -var="environment_key=test"
+```
+
+Terraform only destroys resources tracked in its state. If you also ran `npm run ld:setup`, use the REST cleanup command for those REST-created resources.
 
 ## Demo Script
 
