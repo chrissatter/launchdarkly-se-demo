@@ -84,4 +84,16 @@ resource "launchdarkly_feature_flag_environment" "test" {
       negate       = false
     }
   }
+
+  rules {
+    variation = 1
+
+    clauses {
+      context_kind = "user"
+      attribute    = "experimentCohort"
+      op           = "in"
+      values       = ["landing-page-q3"]
+      negate       = false
+    }
+  }
 }

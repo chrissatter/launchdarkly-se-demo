@@ -9,6 +9,9 @@ const CREATE_TRIGGER = process.env.LD_CREATE_TRIGGER === "true";
 
 const DEMO_TARGET_KEY = "alice-beta-001";
 const ENTERPRISE_RULE_VALUE = "enterprise";
+const EXPERIMENT_COHORT = "landing-page-q3";
+const METRIC_KEY = "landing-page-cta-clicked";
+const METRIC_EVENT_KEY = "hero-cta-clicked";
 
 if (!TOKEN) {
   console.error("Missing LD_API_TOKEN. Create a LaunchDarkly API token and export it before running this script.");
@@ -88,12 +91,30 @@ function hasEnterpriseRule(envConfig) {
   });
 }
 
+function hasExperimentCohortRule(envConfig) {
+  return (envConfig.rules || []).some((rule) => {
+    return (rule.clauses || []).some((clause) => {
+      return (
+        clause.contextKind === "user" &&
+        clause.attribute === "experimentCohort" &&
+        clause.op === "in" &&
+        clause.negate === false &&
+        (clause.values || []).includes(EXPERIMENT_COHORT)
+      );
+    });
+  });
+}
+
 async function getEnvironment() {
   return ldRequest(`/projects/${PROJECT_KEY}/environments/${ENV_KEY}`);
 }
 
 async function getFlag() {
   return optionalLdRequest(`/flags/${PROJECT_KEY}/${FLAG_KEY}?filterEnv=${ENV_KEY}`);
+}
+
+async function getMetric() {
+  return optionalLdRequest(`/metrics/${PROJECT_KEY}/${METRIC_KEY}`);
 }
 
 async function createFlag() {
@@ -233,6 +254,22 @@ async function configureTargeting(flag) {
     });
   }
 
+  if (!hasExperimentCohortRule(envConfig)) {
+    instructions.push({
+      kind: "addRule",
+      variationId: falseVariationId,
+      clauses: [
+        {
+          contextKind: "user",
+          attribute: "experimentCohort",
+          op: "in",
+          negate: false,
+          values: [EXPERIMENT_COHORT],
+        },
+      ],
+    });
+  }
+
   if (instructions.length === 0) {
     console.log("Targeting already matches the demo setup.");
     return flag;
@@ -241,6 +278,31 @@ async function configureTargeting(flag) {
   console.log(`Applying ${instructions.length} targeting instruction(s)...`);
   await patchFlag(instructions, "Configure LaunchDarkly SE demo targeting");
   return getFlag();
+}
+
+async function ensureMetric() {
+  const existing = await getMetric();
+
+  if (existing) {
+    console.log(`Using existing metric ${METRIC_KEY}.`);
+    return existing;
+  }
+
+  console.log(`Creating metric ${METRIC_KEY}...`);
+  return ldRequest(`/metrics/${PROJECT_KEY}`, {
+    method: "POST",
+    body: JSON.stringify({
+      key: METRIC_KEY,
+      name: "Landing page CTA clicked",
+      description: "Binary conversion metric for the LaunchDarkly SE demo landing page CTA.",
+      kind: "custom",
+      eventKey: METRIC_EVENT_KEY,
+      isNumeric: false,
+      successCriteria: "HigherThanBaseline",
+      analysisUnits: ["user"],
+      tags: ["se-demo"],
+    }),
+  });
 }
 
 async function createRemediationTrigger() {
@@ -276,6 +338,8 @@ function printSummary({ environment, trigger }) {
   console.log(`Flag: ${FLAG_KEY}`);
   console.log(`Individual target serving true: user ${DEMO_TARGET_KEY}`);
   console.log(`Rule serving true: user.plan is one of ${ENTERPRISE_RULE_VALUE}`);
+  console.log(`Experiment rule serving false until experiment runs: user.experimentCohort is one of ${EXPERIMENT_COHORT}`);
+  console.log(`Experiment metric: ${METRIC_KEY} listens for ${METRIC_EVENT_KEY}`);
   console.log("Default and off variation: false");
 }
 
@@ -284,6 +348,7 @@ try {
   let flag = await ensureFlag();
   flag = await ensureClientSideAvailability(flag);
   flag = await configureTargeting(flag);
+  await ensureMetric();
 
   let trigger = null;
   if (CREATE_TRIGGER) {

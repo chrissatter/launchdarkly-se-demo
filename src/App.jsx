@@ -125,7 +125,7 @@ function App({ launchDarklyReady }) {
           kind: "user",
           key: `experiment-visitor-${Date.now()}-${index}`,
           name: `Experiment Visitor ${index + 1}`,
-          plan: index % 4 === 0 ? "enterprise" : index % 2 === 0 ? "pro" : "free",
+          plan: index % 2 === 0 ? "pro" : "free",
           companySize: 50 + index * 25,
           region: index % 3 === 0 ? "EU" : "US",
           betaAccess: false,

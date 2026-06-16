@@ -78,9 +78,11 @@ The fastest repeatable setup is the included REST script. It uses LaunchDarkly's
 - Set the off/default behavior to `false`
 - Add the individual target `alice-beta-001 -> true`
 - Add the rule `user.plan is one of enterprise -> true`
+- Add the experiment cohort rule `user.experimentCohort is one of landing-page-q3 -> false`
+- Create the metric `landing-page-cta-clicked` for the custom event `hero-cta-clicked`
 - Optionally create a generic remediation trigger that turns the flag off
 
-Create a LaunchDarkly API token with write access to the project, then run:
+Create a LaunchDarkly API token with write access to flags and metrics, then run:
 
 ```bash
 export LD_API_TOKEN="api-..."
@@ -104,6 +106,8 @@ LD_REMEDIATION_TRIGGER_URL=...
 ```
 
 Keep `LD_API_TOKEN` and the real trigger URL out of Git. The trigger URL is sensitive because anyone with it can invoke the rollback.
+
+The REST script prepares the flag, targeting rules, and metric. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
 
 ### Option B: Manual UI Setup
 
@@ -198,6 +202,35 @@ Keep `LD_API_TOKEN` and the real trigger URL out of Git. The trigger URL is sens
 
    LaunchDarkly should turn the flag off, and the local app should roll back to the control hero.
 
+10. Configure the experimentation cohort rule.
+
+   On the same flag targeting page, add a custom rule:
+
+   ```text
+   Rule name: Experiment cohort
+   Context kind: user
+   Attribute: experimentCohort
+   Operator: is one of
+   Value: landing-page-q3
+   Serve: false
+   ```
+
+   The app's **Generate sample traffic** button sends synthetic visitors with `experimentCohort: "landing-page-q3"`.
+
+11. Create the experiment metric.
+
+   Go to **Data → Metrics**, create a LaunchDarkly-hosted custom metric, and use:
+
+   ```text
+   Name: Landing page CTA clicked
+   Metric key: landing-page-cta-clicked
+   Event kind: Custom
+   Event key: hero-cta-clicked
+   Metric definition: Count distinct units (Percent)
+   Success criteria: Higher is better
+   Randomization unit: user
+   ```
+
 ### Option C: Terraform Setup
 
 Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. Use the official LaunchDarkly Terraform provider and model the same state as the REST script:
@@ -210,6 +243,8 @@ Targeting: on
 Off/default variation: false
 Individual target: user alice-beta-001 serves true
 Rule: user.plan is one of enterprise serves true
+Rule: user.experimentCohort is one of landing-page-q3 serves false
+Metric: landing-page-cta-clicked listens for hero-cta-clicked
 ```
 
 See [terraform/README.md](terraform/README.md) for the Terraform workflow notes.
@@ -310,25 +345,11 @@ The right-side demo console also includes **Generate sample traffic**, which cre
 user.experimentCohort = landing-page-q3
 ```
 
-Use that cohort for the experiment audience so it does not interfere with the Part 2 targeting examples.
-
-### Metric
-
-Create a LaunchDarkly-hosted custom conversion metric:
-
-```text
-Name: Landing page CTA clicked
-Event key: hero-cta-clicked
-Metric type: Custom conversion binary
-Success criteria: Higher is better
-Randomization unit: user
-```
-
-A binary conversion metric is a good fit because the product question is whether a visitor clicked the CTA at least once.
+Use that cohort for the experiment audience so it does not interfere with the Part 2 targeting examples. If you used the REST setup script, the metric and cohort rule are already created. If you used manual setup, complete steps 10 and 11 in **Option B: Manual UI Setup** first.
 
 ### Experiment
 
-Create an experiment using the existing flag and the metric above:
+Create an experiment using the existing flag and metric:
 
 ```text
 Name: Landing page hero CTA experiment
@@ -336,10 +357,11 @@ Hypothesis: The new landing page hero increases CTA conversion.
 Metric source: LaunchDarkly
 Primary metric: Landing page CTA clicked
 Flag: new-landing-page-hero
+Targeting rule: Experiment cohort
 Randomize by: user
-Audience rule: user.experimentCohort is one of landing-page-q3
 Traffic split: 50% false, 50% true
 Variation served outside experiment: false
+Control: false
 ```
 
 Turn the flag on, then start an experiment iteration.

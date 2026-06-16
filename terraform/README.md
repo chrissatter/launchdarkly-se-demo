@@ -27,6 +27,8 @@ Off variation: false
 Default/fallthrough variation: false
 Individual target: user alice-beta-001 serves true
 Rule: if user.plan is one of enterprise, serve true
+Rule: if user.experimentCohort is one of landing-page-q3, serve false
+Metric: landing-page-cta-clicked listens for hero-cta-clicked
 ```
 
 ## Example Workflow
@@ -63,7 +65,7 @@ Rule: if user.plan is one of enterprise, serve true
 
 ## Important Notes
 
-The example manages the flag and environment targeting. The remediation trigger is easier to create with the REST setup script because LaunchDarkly's Terraform provider focuses on flag resources, while the REST API can return the generated `triggerURL` directly.
+The example manages the flag and environment targeting rules. Create the experiment metric with the LaunchDarkly UI or REST setup script, then create and start the experiment in the LaunchDarkly UI. The remediation trigger is also easier to create with the REST setup script because the REST API can return the generated `triggerURL` directly.
 
 ## Why This Repo Uses REST First
 
