@@ -280,6 +280,39 @@ function App({ launchDarklyReady }) {
               </span>
             </div>
 
+            <section className="console-section split-section" aria-label="Active attributes and listener">
+              <div>
+                <div className="section-title compact">
+                  <Target size={18} />
+                  <h2>Attributes</h2>
+                </div>
+                <div className="attribute-grid">
+                  <Attribute label="plan" value={activeContext.plan} />
+                  <Attribute label="companySize" value={activeContext.companySize} />
+                  <Attribute label="region" value={activeContext.region} />
+                  <Attribute label="betaAccess" value={String(activeContext.betaAccess)} />
+                </div>
+              </div>
+              <div>
+                <div className="section-title compact">
+                  <Bell size={18} />
+                  <h2>Live listener</h2>
+                </div>
+                <div className="listener-log compact-log">
+                  {changeLog.length ? (
+                    changeLog.slice(0, 2).map((entry) => (
+                      <div className="log-entry" key={entry.id}>
+                        <span>{entry.text}</span>
+                        <small>{entry.at}</small>
+                      </div>
+                    ))
+                  ) : (
+                    <p>Toggle the flag in LaunchDarkly while this page stays open.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+
             <section className="console-section" aria-label="Flag status">
               <div className="panel-header">
                 <Activity size={18} />
@@ -419,39 +452,6 @@ function App({ launchDarklyReady }) {
                 ) : (
                   <p className="empty-chat">{aiConfig.welcomeMessage}</p>
                 )}
-              </div>
-            </section>
-
-            <section className="console-section split-section" aria-label="Active attributes and listener">
-              <div>
-                <div className="section-title compact">
-                  <Target size={18} />
-                  <h2>Attributes</h2>
-                </div>
-                <div className="attribute-grid">
-                  <Attribute label="plan" value={activeContext.plan} />
-                  <Attribute label="companySize" value={activeContext.companySize} />
-                  <Attribute label="region" value={activeContext.region} />
-                  <Attribute label="betaAccess" value={String(activeContext.betaAccess)} />
-                </div>
-              </div>
-              <div>
-                <div className="section-title compact">
-                  <Bell size={18} />
-                  <h2>Live listener</h2>
-                </div>
-                <div className="listener-log compact-log">
-                  {changeLog.length ? (
-                    changeLog.slice(0, 2).map((entry) => (
-                      <div className="log-entry" key={entry.id}>
-                        <span>{entry.text}</span>
-                        <small>{entry.at}</small>
-                      </div>
-                    ))
-                  ) : (
-                    <p>Toggle the flag in LaunchDarkly while this page stays open.</p>
-                  )}
-                </div>
               </div>
             </section>
           </aside>
