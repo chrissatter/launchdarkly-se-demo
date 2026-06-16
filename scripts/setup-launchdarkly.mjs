@@ -392,7 +392,7 @@ async function ensureMetric() {
 }
 
 async function createRemediationTrigger() {
-  console.log("Creating optional remediation trigger...");
+  console.log("Creating remediation trigger...");
 
   return ldRequest(`/flags/${PROJECT_KEY}/${FLAG_KEY}/triggers/${ENV_KEY}`, {
     method: "POST",
@@ -414,7 +414,7 @@ function printSummary({ environment, trigger }) {
   if (trigger?.triggerURL) {
     console.log(`LD_REMEDIATION_TRIGGER_URL=${trigger.triggerURL}`);
   } else {
-    console.log("LD_REMEDIATION_TRIGGER_URL=<create one in LaunchDarkly or rerun with LD_CREATE_TRIGGER=true>");
+    console.log("LD_REMEDIATION_TRIGGER_URL=<rerun with LD_CREATE_TRIGGER=true to create one>");
   }
 
   console.log("");

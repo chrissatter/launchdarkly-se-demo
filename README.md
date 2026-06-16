@@ -84,7 +84,7 @@ The fastest repeatable setup is the included REST script. It uses LaunchDarkly's
 - Add the experiment cohort rule `user.experimentCohort is one of landing-page-q3 -> false`
 - Create the metric `landing-page-cta-clicked` for the custom event `hero-cta-clicked`
 - Create the AI config flag `support-chatbot-ai-config`
-- Optionally create a generic remediation trigger that turns the flag off
+- Create a generic remediation trigger that turns the flag off
 
 Create a LaunchDarkly API token with write access to flags and metrics.
 
@@ -102,7 +102,7 @@ API version: latest available
 Service token: recommended if available
 ```
 
-Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and optionally triggers, so read-only access will fail.
+Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and a remediation trigger, so read-only access will fail.
 
 The script uses LaunchDarkly semantic patch requests for flag targeting updates.
 
@@ -112,15 +112,11 @@ Then run:
 export LD_API_TOKEN="api-..."
 export LD_PROJECT_KEY="default"
 export LD_ENV_KEY="test"
-npm run ld:setup
-```
-
-To create the remediation trigger during setup:
-
-```bash
 export LD_CREATE_TRIGGER=true
 npm run ld:setup
 ```
+
+`LD_CREATE_TRIGGER=true` is included because the remediation trigger is part of the assignment's Part 1 requirements. The generated trigger URL is sensitive because anyone with it can invoke the rollback.
 
 The script prints the values to copy into `.env`:
 
@@ -129,7 +125,7 @@ VITE_LD_CLIENT_ID=...
 LD_REMEDIATION_TRIGGER_URL=...
 ```
 
-Keep `LD_API_TOKEN` and the real trigger URL out of Git. The trigger URL is sensitive because anyone with it can invoke the rollback.
+Keep `LD_API_TOKEN` and the real trigger URL out of Git.
 
 The REST script prepares the flag, targeting rules, metric, and chatbot configuration flag. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
 
