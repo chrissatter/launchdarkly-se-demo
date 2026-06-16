@@ -21,23 +21,22 @@ landing-page-cta-clicked
 
 ## Table of Contents
 
-- [Local Machine Setup](#local-machine-setup)
-  - [Using This Repo](#using-this-repo)
-- [LaunchDarkly Tenant Setup](#launchdarkly-tenant-setup)
-  - [Option A: REST API Setup](#option-a-rest-api-setup)
-  - [Option B: Manual UI Setup](#option-b-manual-ui-setup)
-  - [Option C: Terraform Setup](#option-c-terraform-setup)
+- [Quick Start](#quick-start)
+  - [What the Setup Creates](#what-the-setup-creates)
 - [Part 1: Release and Remediate](#part-1-release-and-remediate)
 - [Part 2: Target](#part-2-target)
 - [Extra Credit: Experimentation](#extra-credit-experimentation)
 - [Extra Credit: AI Configs](#extra-credit-ai-configs)
 - [Extra Credit: Integrations](#extra-credit-integrations)
+- [Alternative Setup Paths](#alternative-setup-paths)
+  - [Manual UI Setup](#manual-ui-setup)
+  - [Terraform Setup](#terraform-setup)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
-## Local Machine Setup
+## Quick Start
 
-### Using This Repo
+Use this path to simulate what a reviewer will do from a fresh GitHub clone. It sets up the local app and bootstraps the required LaunchDarkly resources with the REST API script.
 
 1. Clone the repository:
 
@@ -58,29 +57,50 @@ landing-page-cta-clicked
    cp .env.example .env
    ```
 
-4. Configure LaunchDarkly environment values.
+4. Create a LaunchDarkly API token with write access to flags and metrics.
 
-   Follow one of the **LaunchDarkly Tenant Setup** options below. The REST setup script updates `.env` automatically.
+   See LaunchDarkly's [API access token documentation](https://launchdarkly.com/docs/home/account/api).
 
-   - [Option A: REST API Setup](#option-a-rest-api-setup)
-   - [Option B: Manual UI Setup](#option-b-manual-ui-setup)
-   - [Option C: Terraform Setup](#option-c-terraform-setup)
+   For this demo, use:
 
-5. Run the app:
+   ```text
+   Role: Writer or Admin
+   API version: latest available
+   Service token: recommended if available
+   ```
+
+   Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and a remediation trigger, so read-only access will fail.
+
+5. Run the automated LaunchDarkly setup:
+
+   ```bash
+   export LD_API_TOKEN="api-..."
+   export LD_PROJECT_KEY="default"
+   export LD_ENV_KEY="test"
+   export LD_CREATE_TRIGGER=true
+   npm run ld:setup
+   ```
+
+   The script updates `.env` in the current directory with:
+
+   ```bash
+   VITE_LD_CLIENT_ID=...
+   LD_REMEDIATION_TRIGGER_URL=...
+   ```
+
+   It does not write `LD_API_TOKEN` to `.env`; keep the token shell-only and out of Git.
+
+6. Run the app:
 
    ```bash
    npm run dev
    ```
 
-   Open the local URL printed by Vite, usually `http://localhost:5173/`.
+   Open the local URL printed by Vite, usually `http://localhost:5173/`. If that port is busy, Vite will print the next available port, such as `http://localhost:5174/`.
 
-## LaunchDarkly Tenant Setup
+### What the Setup Creates
 
-Use these steps to recreate the demo in a new LaunchDarkly tenant.
-
-### Option A: REST API Setup
-
-The fastest repeatable setup is the included REST script. It uses LaunchDarkly's REST API to:
+The REST script uses LaunchDarkly's API to:
 
 - Create or reuse `new-landing-page-hero`
 - Enable client-side SDK availability
@@ -93,232 +113,7 @@ The fastest repeatable setup is the included REST script. It uses LaunchDarkly's
 - Create the AI config flag `support-chatbot-ai-config`
 - Create a generic remediation trigger that turns the flag off
 
-Create a LaunchDarkly API token with write access to flags and metrics.
-
-LaunchDarkly documentation:
-
-```text
-https://launchdarkly.com/docs/home/account/api
-```
-
-For this demo, use:
-
-```text
-Role: Writer or Admin
-API version: latest available
-Service token: recommended if available
-```
-
-Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and a remediation trigger, so read-only access will fail.
-
-The script uses LaunchDarkly semantic patch requests for flag targeting updates.
-
-Then run:
-
-```bash
-export LD_API_TOKEN="api-..."
-export LD_PROJECT_KEY="default"
-export LD_ENV_KEY="test"
-export LD_CREATE_TRIGGER=true
-npm run ld:setup
-```
-
-`LD_CREATE_TRIGGER=true` is included because the remediation trigger is part of the assignment's Part 1 requirements. The generated trigger URL is sensitive because anyone with it can invoke the rollback.
-
-The script updates `.env` in the current directory with:
-
-```bash
-VITE_LD_CLIENT_ID=...
-LD_REMEDIATION_TRIGGER_URL=...
-```
-
-It also prints the generated values for visibility. It does not write `LD_API_TOKEN` to `.env`; keep the token shell-only and out of Git.
-
-The REST script prepares the flag, targeting rules, metric, and chatbot configuration flag. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
-
-### Option B: Manual UI Setup
-
-1. Create or choose a LaunchDarkly project and environment.
-
-   This README assumes the environment is named `Test`, but any environment works as long as its Client-side ID is used in `.env`.
-
-2. Copy the environment's **Client-side ID**.
-
-   Add it to `.env`:
-
-   ```bash
-   VITE_LD_CLIENT_ID=your-client-side-id
-   ```
-
-   Use the Client-side ID, not the server-side SDK key.
-
-3. Create a boolean feature flag:
-
-   ```text
-   Name: new-landing-page-hero
-   Key: new-landing-page-hero
-   Variations: Boolean
-   On variation: true
-   Off variation: false
-   ```
-
-4. Enable browser SDK access for the flag.
-
-   In the flag's **Advanced controls**, turn on:
-
-   ```text
-   Available on client-side SDKs
-   ```
-
-5. Configure the basic release/rollback behavior.
-
-   For the Part 1 release demo:
-
-   ```text
-   Flag targeting: On
-   Default rule: serve true
-   Off variation: false
-   ```
-
-   Toggle the flag on and off while the local app is open. The hero and the Live listener panel should update without a browser refresh.
-
-6. Configure individual targeting for Part 2.
-
-   Keep flag targeting on, but set the default rule to serve `false`. Add this individual target:
-
-   ```text
-   Context kind: user
-   Context key: alice-beta-001
-   Serve: true
-   ```
-
-   If the context is not searchable yet, open the local app and click **Individually targeted beta user** once. This sends the context to LaunchDarkly.
-
-7. Configure rule-based targeting for Part 2.
-
-   Add a custom rule:
-
-   ```text
-   Rule name: Enterprise plan visitors
-   Context kind: user
-   Attribute: plan
-   Operator: is one of
-   Value: enterprise
-   Serve: true
-   ```
-
-   The app's **Enterprise rule match** context sends `plan: "enterprise"`.
-
-8. Create a remediation trigger.
-
-   From the flag's environment configuration, add a trigger that turns flag targeting off. Use a generic trigger, copy the generated URL, and store it locally:
-
-   ```bash
-   LD_REMEDIATION_TRIGGER_URL=your-launchdarkly-trigger-url
-   ```
-
-   Trigger URLs are sensitive because anyone with the URL can invoke the action. Do not commit the real URL.
-
-9. Test remediation.
-
-   With the app showing a `true` variation, run:
-
-   ```bash
-   curl -X POST "$LD_REMEDIATION_TRIGGER_URL"
-   ```
-
-   LaunchDarkly should turn the flag off, and the local app should roll back to the control hero.
-
-10. Configure the experimentation cohort rule.
-
-   On the same flag targeting page, add a custom rule:
-
-   ```text
-   Rule name: Experiment cohort
-   Context kind: user
-   Attribute: experimentCohort
-   Operator: is one of
-   Value: landing-page-q3
-   Serve: false
-   ```
-
-   The app's **Generate sample traffic** button sends synthetic visitors with `experimentCohort: "landing-page-q3"`.
-
-11. Create the experiment metric.
-
-   Go to **Data → Metrics**, create a LaunchDarkly-hosted custom metric, and use:
-
-   ```text
-   Name: Landing page CTA clicked
-   Metric key: landing-page-cta-clicked
-   Event kind: Custom
-   Event key: hero-cta-clicked
-   Metric definition: Count distinct units (Percent)
-   Success criteria: Higher is better
-   Randomization unit: user
-   ```
-
-12. Create the chatbot AI config.
-
-   If your LaunchDarkly account has **AgentControl / AI Configs**, create an AI Config for the support chatbot with these two variations:
-
-   ```text
-   Config key: support-chatbot-ai-config
-   Variation: Concise support guide
-   Model: gpt-4o-mini
-   Temperature: 0.2
-   Prompt: You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.
-   ```
-
-   ```text
-   Variation: Empathetic escalation guide
-   Model: gpt-4o
-   Temperature: 0.45
-   Prompt: You are an empathetic ABC SaaS support assistant. Reassure the customer, provide step-by-step help, and escalate quickly for account-specific or incident-impacting questions.
-   ```
-
-   If AI Configs are not enabled in the trial, create a JSON feature flag instead:
-
-   ```text
-   Name: Support chatbot AI config
-   Key: support-chatbot-ai-config
-   Variations: JSON
-   Available on client-side SDKs: enabled
-   Default/off variation: Concise support guide JSON
-   ```
-
-   Example JSON variation:
-
-   ```json
-   {
-     "name": "Concise support guide",
-     "model": "gpt-4o-mini",
-     "temperature": 0.2,
-     "systemPrompt": "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.",
-     "welcomeMessage": "Ask about onboarding, billing, incidents, or release safety.",
-     "responseStyle": "concise",
-     "escalationThreshold": 0.7
-   }
-   ```
-
-### Option C: Terraform Setup
-
-Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. It also satisfies the **Integrations** extra credit by using LaunchDarkly's Terraform integration/provider. Model the same state as the REST script:
-
-```text
-Flag: new-landing-page-hero
-Environment: test
-Client-side SDK availability: enabled
-Targeting: on
-Off/default variation: false
-Individual target: user alice-beta-001 serves true
-Rule: user.plan is one of enterprise serves true
-Rule: user.experimentCohort is one of landing-page-q3 serves false
-Metric: landing-page-cta-clicked listens for hero-cta-clicked
-AI config flag: support-chatbot-ai-config
-```
-
-See [terraform/README.md](terraform/README.md) for a fresh-clone Terraform workflow, reviewer talk track, and integration boundaries.
+The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
 
 ## Part 1: Release and Remediate
 
@@ -333,11 +128,12 @@ The flag `new-landing-page-hero` controls the landing page hero.
 
 To demonstrate release and rollback:
 
-1. Start with the flag off. The local app should show the control hero and `Raw value: false`.
-2. Turn the flag on in LaunchDarkly and serve `true` to the current context.
-3. The app should switch to the new hero.
-4. Turn the flag off again.
-5. The app should roll back to the control hero.
+1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
+2. Start with the flag off. The local app should show the control hero and `Raw value: false`.
+3. Turn the flag on in LaunchDarkly and serve `true` to the current context.
+4. The app should switch to the new hero.
+5. Turn the flag off again.
+6. The app should roll back to the control hero.
 
 ### Instant Releases and Rollbacks
 
@@ -373,7 +169,7 @@ This satisfies the remediation requirement: a problematic feature can be turned 
 
 The app includes a context switcher in the right-side demo console. Each card calls `ldClient.identify(...)` with different context attributes.
 
-Recommended LaunchDarkly targeting setup:
+The automated setup already creates these targeting examples. If you are configuring LaunchDarkly manually, use:
 
 1. Keep the flag on, but set the default rule to serve `false`.
 2. Add an individual target:
@@ -416,7 +212,7 @@ The right-side demo console also includes **Generate sample traffic**, which cre
 user.experimentCohort = landing-page-q3
 ```
 
-Use that cohort for the experiment audience so it does not interfere with the Part 2 targeting examples. If you used the REST setup script, the metric and cohort rule are already created. If you used manual setup, complete steps 10 and 11 in **Option B: Manual UI Setup** first.
+Use that cohort for the experiment audience so it does not interfere with the Part 2 targeting examples. If you used the REST setup script, the metric and cohort rule are already created. If you configured LaunchDarkly manually, use the metric and cohort settings in [Manual UI Setup](#manual-ui-setup).
 
 ### Experiment
 
@@ -526,6 +322,104 @@ terraform apply
 Then copy the environment Client-side ID into `.env` and run the app normally.
 
 The Terraform integration is a strong SE demo point because it shows how LaunchDarkly fits into an existing platform engineering workflow: application teams can review flag and targeting changes, promote them through pull requests, and keep tenant configuration reproducible.
+
+## Alternative Setup Paths
+
+The Quick Start path is the recommended reviewer flow. Use these alternatives when you want to show the underlying LaunchDarkly setup work or demo Terraform as an integration.
+
+### Manual UI Setup
+
+Use this path if you do not want to run the REST setup script.
+
+1. Copy the environment **Client-side ID** into `.env`:
+
+   ```bash
+   VITE_LD_CLIENT_ID=your-client-side-id
+   ```
+
+2. Create the boolean flag:
+
+   ```text
+   Name: new-landing-page-hero
+   Key: new-landing-page-hero
+   Variations: Boolean
+   On variation: true
+   Off variation: false
+   Available on client-side SDKs: enabled
+   ```
+
+3. Configure release behavior:
+
+   ```text
+   Flag targeting: On
+   Default rule: serve false
+   Off variation: false
+   ```
+
+4. Add Part 2 targeting:
+
+   ```text
+   Individual target: user alice-beta-001 serves true
+   Rule: if user.plan is one of enterprise, serve true
+   Rule: if user.experimentCohort is one of landing-page-q3, serve false
+   ```
+
+5. Create a remediation trigger that turns flag targeting off. Store the generated URL locally:
+
+   ```bash
+   LD_REMEDIATION_TRIGGER_URL=your-launchdarkly-trigger-url
+   ```
+
+   Trigger URLs are sensitive because anyone with the URL can invoke the rollback. Do not commit the real URL.
+
+6. Create the experiment metric:
+
+   ```text
+   Name: Landing page CTA clicked
+   Metric key: landing-page-cta-clicked
+   Event kind: Custom
+   Event key: hero-cta-clicked
+   Metric definition: Count distinct units (Percent)
+   Success criteria: Higher is better
+   Randomization unit: user
+   ```
+
+7. Create the chatbot config. If your tenant has AgentControl / AI Configs, create an AI Config with prompt/model variations. If it does not, create a JSON flag:
+
+   ```text
+   Name: Support chatbot AI config
+   Key: support-chatbot-ai-config
+   Variations: JSON
+   Available on client-side SDKs: enabled
+   ```
+
+   Example JSON variation:
+
+   ```json
+   {
+     "name": "Concise support guide",
+     "model": "gpt-4o-mini",
+     "temperature": 0.2,
+     "systemPrompt": "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.",
+     "welcomeMessage": "Ask about onboarding, billing, incidents, or release safety.",
+     "responseStyle": "concise",
+     "escalationThreshold": 0.7
+   }
+   ```
+
+### Terraform Setup
+
+Use Terraform when you want to show LaunchDarkly configuration managed as infrastructure. The example lives in [terraform/README.md](terraform/README.md) and models the same core state as the REST script:
+
+```text
+new-landing-page-hero
+support-chatbot-ai-config
+individual targeting for alice-beta-001
+enterprise rule-based targeting
+experiment cohort targeting
+client-side SDK availability
+environment-level default/off behavior
+```
 
 ## Demo Script
 
