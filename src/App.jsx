@@ -15,6 +15,8 @@ import {
   UserRound
 } from "lucide-react";
 
+// Recreate these LaunchDarkly resources in the reviewer's tenant, or run
+// `npm run ld:setup` to create them automatically through the REST API.
 const HERO_FLAG_KEY = "new-landing-page-hero";
 const AI_CONFIG_KEY = "support-chatbot-ai-config";
 const EXPERIMENT_EVENT_KEY = "hero-cta-clicked";

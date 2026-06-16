@@ -4,6 +4,8 @@ import { asyncWithLDProvider } from "launchdarkly-react-client-sdk";
 import App from "./App.jsx";
 import "./styles.css";
 
+// Replace VITE_LD_CLIENT_ID in .env with the Client-side ID for the
+// LaunchDarkly environment used by the reviewer, such as the Test environment.
 const clientSideID = import.meta.env.VITE_LD_CLIENT_ID;
 const hasConfiguredClientSideID =
   clientSideID &&
