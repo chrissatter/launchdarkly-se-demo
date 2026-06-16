@@ -39,8 +39,8 @@ new-landing-page-hero
 1. Clone the repository:
 
    ```bash
-   git clone <repo-url>
-   cd LaunchDarkly
+   git clone https://github.com/chrissatter/launchdarkly-se-demo.git
+   cd launchdarkly-se-demo
    ```
 
 2. Install dependencies:
