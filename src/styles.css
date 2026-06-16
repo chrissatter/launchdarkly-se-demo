@@ -225,6 +225,11 @@ h2 {
   padding: 14px;
 }
 
+.experiment-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .panel-header {
   margin-bottom: 18px;
   font-weight: 800;
@@ -315,6 +320,25 @@ dd {
 .context-card.selected {
   border-color: #2f7f62;
   background: #eaf7e6;
+}
+
+.sample-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 1px solid #274d3d;
+  padding: 0 12px;
+  color: #f8fbf5;
+  background: #274d3d;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sample-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .context-card span {

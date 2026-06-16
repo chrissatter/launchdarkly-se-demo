@@ -7,6 +7,7 @@ import {
   Bell,
   CheckCircle2,
   FlaskConical,
+  MousePointerClick,
   RotateCcw,
   ShieldCheck,
   Target,
@@ -14,6 +15,9 @@ import {
 } from "lucide-react";
 
 const HERO_FLAG_KEY = "new-landing-page-hero";
+const EXPERIMENT_EVENT_KEY = "hero-cta-clicked";
+const EXPERIMENT_COHORT = "landing-page-q3";
+const SIMULATED_VISITOR_COUNT = 24;
 
 const demoContexts = [
   {
@@ -56,7 +60,7 @@ const rolloutEvents = [
   "Target internal beta user by key",
   "Add rule: plan is enterprise OR companySize greater than 1000",
   "Attach trigger to turn targeting off during an incident",
-  "Track CTA clicks for experimentation"
+  "Create an experiment metric from hero-cta-clicked"
 ];
 
 function App({ launchDarklyReady }) {
@@ -66,6 +70,8 @@ function App({ launchDarklyReady }) {
   const [changeLog, setChangeLog] = useState([]);
   const [incidentState, setIncidentState] = useState("healthy");
   const [ctaClicks, setCtaClicks] = useState(0);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [experimentRun, setExperimentRun] = useState(null);
 
   const rawHeroFlag = flags[HERO_FLAG_KEY];
   const heroFlagPresent = Object.prototype.hasOwnProperty.call(flags, HERO_FLAG_KEY);
@@ -98,10 +104,62 @@ function App({ launchDarklyReady }) {
 
   function handleCtaClick() {
     setCtaClicks((count) => count + 1);
-    ldClient?.track("hero-cta-clicked", activeContext, {
+    ldClient?.track(EXPERIMENT_EVENT_KEY, {
+      contextKey: activeContext.key,
       flagKey: HERO_FLAG_KEY,
-      variation: heroEnabled ? "new" : "control"
+      variation: heroEnabled ? "new" : "control",
+      source: "manual-demo-click"
     });
+  }
+
+  async function simulateExperimentTraffic() {
+    if (!ldClient || isSimulating) return;
+
+    setIsSimulating(true);
+    const previousContext = activeContext;
+    let conversions = 0;
+
+    try {
+      for (let index = 0; index < SIMULATED_VISITOR_COUNT; index += 1) {
+        const context = {
+          kind: "user",
+          key: `experiment-visitor-${Date.now()}-${index}`,
+          name: `Experiment Visitor ${index + 1}`,
+          plan: index % 4 === 0 ? "enterprise" : index % 2 === 0 ? "pro" : "free",
+          companySize: 50 + index * 25,
+          region: index % 3 === 0 ? "EU" : "US",
+          betaAccess: false,
+          experimentCohort: EXPERIMENT_COHORT
+        };
+
+        await ldClient.identify(context);
+        const variation = await ldClient.variation(HERO_FLAG_KEY, false);
+        const conversionRate = variation === true ? 0.58 : 0.34;
+        const converted = Math.random() < conversionRate;
+
+        if (converted) {
+          conversions += 1;
+          ldClient.track(EXPERIMENT_EVENT_KEY, {
+            contextKey: context.key,
+            flagKey: HERO_FLAG_KEY,
+            variation: variation === true ? "new" : "control",
+            experimentCohort: EXPERIMENT_COHORT,
+            source: "sample-traffic-generator"
+          });
+        }
+      }
+
+      await ldClient.flush?.();
+      await ldClient.identify(previousContext);
+      setCtaClicks((count) => count + conversions);
+      setExperimentRun({
+        visitors: SIMULATED_VISITOR_COUNT,
+        conversions,
+        at: new Date().toLocaleTimeString()
+      });
+    } finally {
+      setIsSimulating(false);
+    }
   }
 
   const triggerCurl = useMemo(() => {
@@ -198,6 +256,40 @@ function App({ launchDarklyReady }) {
                   <dd>{ctaClicks}</dd>
                 </div>
               </dl>
+            </section>
+
+            <section className="console-section experiment-panel" aria-label="Experimentation">
+              <div className="section-title compact">
+                <MousePointerClick size={18} />
+                <h2>Experimentation</h2>
+              </div>
+              <dl className="flag-table">
+                <div>
+                  <dt>Metric event</dt>
+                  <dd>{EXPERIMENT_EVENT_KEY}</dd>
+                </div>
+                <div>
+                  <dt>Cohort</dt>
+                  <dd>{EXPERIMENT_COHORT}</dd>
+                </div>
+                <div>
+                  <dt>Last sample</dt>
+                  <dd>
+                    {experimentRun
+                      ? `${experimentRun.conversions}/${experimentRun.visitors} at ${experimentRun.at}`
+                      : "not generated"}
+                  </dd>
+                </div>
+              </dl>
+              <button
+                className="sample-button"
+                type="button"
+                onClick={simulateExperimentTraffic}
+                disabled={!ldClient || isSimulating}
+              >
+                <FlaskConical size={16} />
+                {isSimulating ? "Generating sample..." : "Generate sample traffic"}
+              </button>
             </section>
 
             <section className="console-section" aria-label="Context targeting">

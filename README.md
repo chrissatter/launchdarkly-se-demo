@@ -25,6 +25,7 @@ new-landing-page-hero
   - [Option C: Terraform Setup](#option-c-terraform-setup)
 - [Part 1: Release and Remediate](#part-1-release-and-remediate)
 - [Part 2: Target](#part-2-target)
+- [Extra Credit: Experimentation](#extra-credit-experimentation)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
@@ -287,6 +288,74 @@ Expected local behavior:
 - **Individually targeted beta user**: receives `true` and sees the new hero.
 - **Enterprise rule match**: receives `true` through the `plan = enterprise` rule and sees the new hero.
 
+## Extra Credit: Experimentation
+
+Scenario: ABC Company wants to measure whether the redesigned landing page improves CTA conversion before rolling it out broadly.
+
+This repo uses the same feature flag from Part 2:
+
+```text
+new-landing-page-hero
+```
+
+The app already sends a custom LaunchDarkly event when the CTA is clicked:
+
+```text
+hero-cta-clicked
+```
+
+The right-side demo console also includes **Generate sample traffic**, which creates synthetic experiment visitors with this attribute:
+
+```text
+user.experimentCohort = landing-page-q3
+```
+
+Use that cohort for the experiment audience so it does not interfere with the Part 2 targeting examples.
+
+### Metric
+
+Create a LaunchDarkly-hosted custom conversion metric:
+
+```text
+Name: Landing page CTA clicked
+Event key: hero-cta-clicked
+Metric type: Custom conversion binary
+Success criteria: Higher is better
+Randomization unit: user
+```
+
+A binary conversion metric is a good fit because the product question is whether a visitor clicked the CTA at least once.
+
+### Experiment
+
+Create an experiment using the existing flag and the metric above:
+
+```text
+Name: Landing page hero CTA experiment
+Hypothesis: The new landing page hero increases CTA conversion.
+Metric source: LaunchDarkly
+Primary metric: Landing page CTA clicked
+Flag: new-landing-page-hero
+Randomize by: user
+Audience rule: user.experimentCohort is one of landing-page-q3
+Traffic split: 50% false, 50% true
+Variation served outside experiment: false
+```
+
+Turn the flag on, then start an experiment iteration.
+
+### Measure
+
+For a reviewer demo:
+
+1. Start the experiment iteration in LaunchDarkly.
+2. Open the local app.
+3. Click **Generate sample traffic** a few times.
+4. Wait a few minutes for LaunchDarkly to process events.
+5. Open the experiment's **Results** tab and compare conversion between `false` and `true`.
+
+For a real product decision, do not rely on the synthetic traffic generator. Run the experiment against real eligible traffic until LaunchDarkly shows enough sample size and confidence to make a decision.
+
 ## Demo Script
 
 1. Start with the flag off and show the control landing page.
@@ -295,7 +364,8 @@ Expected local behavior:
    - Target `alice-beta-001` directly for individual targeting.
    - Add a rule where `plan` is `enterprise` or `companySize` is greater than `1000` for rule-based targeting.
 4. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
-5. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
+5. Start the experiment and click **Generate sample traffic** to send sample exposure and conversion events.
+6. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
 
 ## Notes for Reviewers
 
