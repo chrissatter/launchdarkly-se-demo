@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 const API_BASE = "https://app.launchdarkly.com/api/v2";
+const ENV_FILE = resolve(process.cwd(), ".env");
 const FLAG_KEY = process.env.LD_FLAG_KEY || "new-landing-page-hero";
 const PROJECT_KEY = process.env.LD_PROJECT_KEY || "default";
 const ENV_KEY = process.env.LD_ENV_KEY || "test";
@@ -404,11 +408,46 @@ async function createRemediationTrigger() {
   });
 }
 
+function upsertEnvValue(content, key, value) {
+  const line = `${key}=${value}`;
+  const pattern = new RegExp(`^${key}=.*$`, "m");
+
+  if (pattern.test(content)) {
+    return content.replace(pattern, line);
+  }
+
+  const separator = content.length && !content.endsWith("\n") ? "\n" : "";
+  return `${content}${separator}${line}\n`;
+}
+
+function writeLocalEnv({ environment, trigger }) {
+  const updates = {
+    VITE_LD_CLIENT_ID: environment._id,
+  };
+
+  if (trigger?.triggerURL) {
+    updates.LD_REMEDIATION_TRIGGER_URL = trigger.triggerURL;
+  }
+
+  let content = existsSync(ENV_FILE) ? readFileSync(ENV_FILE, "utf8") : "";
+
+  for (const [key, value] of Object.entries(updates)) {
+    content = upsertEnvValue(content, key, value);
+  }
+
+  writeFileSync(ENV_FILE, content);
+  return Object.keys(updates);
+}
+
 function printSummary({ environment, trigger }) {
+  const writtenKeys = writeLocalEnv({ environment, trigger });
+
   console.log("");
   console.log("LaunchDarkly demo setup complete.");
   console.log("");
-  console.log("Add this to .env:");
+  console.log(`Updated .env with: ${writtenKeys.join(", ")}`);
+  console.log("");
+  console.log("Generated values:");
   console.log(`VITE_LD_CLIENT_ID=${environment._id}`);
 
   if (trigger?.triggerURL) {

@@ -57,7 +57,7 @@ new-landing-page-hero
 
 4. Configure LaunchDarkly environment values.
 
-   Follow one of the **LaunchDarkly Tenant Setup** options below, then add the resulting values to `.env`.
+   Follow one of the **LaunchDarkly Tenant Setup** options below. The REST setup script updates `.env` automatically.
 
 5. Run the app:
 
@@ -118,14 +118,14 @@ npm run ld:setup
 
 `LD_CREATE_TRIGGER=true` is included because the remediation trigger is part of the assignment's Part 1 requirements. The generated trigger URL is sensitive because anyone with it can invoke the rollback.
 
-The script prints the values to copy into `.env`:
+The script updates `.env` in the current directory with:
 
 ```bash
 VITE_LD_CLIENT_ID=...
 LD_REMEDIATION_TRIGGER_URL=...
 ```
 
-Keep `LD_API_TOKEN` and the real trigger URL out of Git.
+It also prints the generated values for visibility. It does not write `LD_API_TOKEN` to `.env`; keep the token shell-only and out of Git.
 
 The REST script prepares the flag, targeting rules, metric, and chatbot configuration flag. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
 
