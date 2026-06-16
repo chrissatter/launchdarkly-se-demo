@@ -62,6 +62,10 @@ landing-page-cta-clicked
 
    Follow one of the **LaunchDarkly Tenant Setup** options below. The REST setup script updates `.env` automatically.
 
+   - [Option A: REST API Setup](#option-a-rest-api-setup)
+   - [Option B: Manual UI Setup](#option-b-manual-ui-setup)
+   - [Option C: Terraform Setup](#option-c-terraform-setup)
+
 5. Run the app:
 
    ```bash
