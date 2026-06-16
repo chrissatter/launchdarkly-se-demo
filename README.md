@@ -21,6 +21,7 @@ landing-page-cta-clicked
 
 ## Table of Contents
 
+- [Prerequisites and Assumptions](#prerequisites-and-assumptions)
 - [Quick Start](#quick-start)
   - [What the Setup Creates](#what-the-setup-creates)
 - [Part 1: Release and Remediate](#part-1-release-and-remediate)
@@ -37,6 +38,32 @@ landing-page-cta-clicked
   - [Option 3: Terraform Cleanup](#option-3-terraform-cleanup)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
+
+## Prerequisites and Assumptions
+
+This solution is published as a public GitHub repository:
+
+```text
+https://github.com/chrissatter/launchdarkly-se-demo
+```
+
+Assumptions for running the sample implementation:
+
+- You have a LaunchDarkly account or trial tenant where you can create flags, metrics, triggers, and experiments.
+- You have access to a LaunchDarkly project and environment. The examples assume:
+
+  ```text
+  Project key: default
+  Environment key: test
+  ```
+
+  Use different values by changing `LD_PROJECT_KEY` and `LD_ENV_KEY`.
+
+- For automated setup, you can create a LaunchDarkly API access token with `Writer` or `Admin` permissions. `Reader` is not sufficient.
+- You have Git, Node.js 18 or newer, and npm installed locally. Node.js 20 LTS is recommended.
+- You can run shell commands in a bash/zsh-style terminal. The examples use macOS/Linux syntax for `export`; Windows PowerShell users can set the same environment variables with `$env:NAME="value"`.
+- You have a modern browser available to open the Vite dev server URL.
+- Optional: install Terraform if you want to demonstrate the integrations extra credit using the Terraform provider.
 
 ## Quick Start
 
