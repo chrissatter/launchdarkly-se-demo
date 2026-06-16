@@ -67,7 +67,7 @@ Assumptions for running the sample implementation:
 
 ## Quick Start
 
-Use this path to simulate what a reviewer will do from a fresh GitHub clone. It sets up the local app and bootstraps the required LaunchDarkly resources with the REST API script.
+Use this path to set up the demo from a fresh GitHub clone. It sets up the local app and bootstraps the required LaunchDarkly resources with the REST API script.
 
 1. Clone the repository:
 
