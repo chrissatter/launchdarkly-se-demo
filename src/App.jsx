@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  Bot,
   CheckCircle2,
   FlaskConical,
   MousePointerClick,
@@ -15,9 +16,21 @@ import {
 } from "lucide-react";
 
 const HERO_FLAG_KEY = "new-landing-page-hero";
+const AI_CONFIG_KEY = "support-chatbot-ai-config";
 const EXPERIMENT_EVENT_KEY = "hero-cta-clicked";
 const EXPERIMENT_COHORT = "landing-page-q3";
 const SIMULATED_VISITOR_COUNT = 24;
+
+const defaultAiConfig = {
+  name: "Concise support guide",
+  model: "gpt-4o-mini",
+  temperature: 0.2,
+  systemPrompt:
+    "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.",
+  welcomeMessage: "Ask about onboarding, billing, incidents, or release safety.",
+  responseStyle: "concise",
+  escalationThreshold: 0.7
+};
 
 const demoContexts = [
   {
@@ -60,7 +73,8 @@ const rolloutEvents = [
   "Target internal beta user by key",
   "Add rule: plan is enterprise OR companySize greater than 1000",
   "Attach trigger to turn targeting off during an incident",
-  "Create an experiment metric from hero-cta-clicked"
+  "Create an experiment metric from hero-cta-clicked",
+  "Change chatbot prompts and models with an AI Config"
 ];
 
 function App({ launchDarklyReady }) {
@@ -72,10 +86,15 @@ function App({ launchDarklyReady }) {
   const [ctaClicks, setCtaClicks] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
   const [experimentRun, setExperimentRun] = useState(null);
+  const [chatQuestion, setChatQuestion] = useState("How do I roll back a risky release?");
+  const [chatHistory, setChatHistory] = useState([]);
 
   const rawHeroFlag = flags[HERO_FLAG_KEY];
+  const rawAiConfig = flags[AI_CONFIG_KEY];
   const heroFlagPresent = Object.prototype.hasOwnProperty.call(flags, HERO_FLAG_KEY);
+  const aiConfigPresent = Object.prototype.hasOwnProperty.call(flags, AI_CONFIG_KEY);
   const heroEnabled = rawHeroFlag === true;
+  const aiConfig = useMemo(() => normalizeAiConfig(rawAiConfig), [rawAiConfig]);
 
   useEffect(() => {
     if (!ldClient) return undefined;
@@ -109,6 +128,40 @@ function App({ launchDarklyReady }) {
       flagKey: HERO_FLAG_KEY,
       variation: heroEnabled ? "new" : "control",
       source: "manual-demo-click"
+    });
+  }
+
+  function handleAskAssistant(event) {
+    event.preventDefault();
+    const question = chatQuestion.trim();
+    if (!question) return;
+
+    const answer = generateSupportAnswer(question, aiConfig);
+    const message = {
+      id: crypto.randomUUID(),
+      question,
+      answer,
+      configName: aiConfig.name,
+      model: aiConfig.model,
+      at: new Date().toLocaleTimeString()
+    };
+
+    setChatHistory((current) => [message, ...current].slice(0, 3));
+    ldClient?.track("chatbot-message-sent", {
+      configKey: AI_CONFIG_KEY,
+      configName: aiConfig.name,
+      model: aiConfig.model,
+      responseStyle: aiConfig.responseStyle,
+      source: "ai-config-demo"
+    });
+  }
+
+  function handleHelpfulClick(message, helpful) {
+    ldClient?.track(helpful ? "chatbot-helpful-clicked" : "chatbot-escalation-clicked", {
+      configKey: AI_CONFIG_KEY,
+      configName: message.configName,
+      model: message.model,
+      source: "ai-config-demo"
     });
   }
 
@@ -292,6 +345,63 @@ function App({ launchDarklyReady }) {
               </button>
             </section>
 
+            <section className="console-section ai-panel" aria-label="AI Config chatbot">
+              <div className="section-title compact">
+                <Bot size={18} />
+                <h2>AI Config</h2>
+              </div>
+              <dl className="flag-table">
+                <div>
+                  <dt>Config</dt>
+                  <dd>{aiConfigPresent ? AI_CONFIG_KEY : "fallback"}</dd>
+                </div>
+                <div>
+                  <dt>Variant</dt>
+                  <dd>{aiConfig.name}</dd>
+                </div>
+                <div>
+                  <dt>Model</dt>
+                  <dd>{aiConfig.model}</dd>
+                </div>
+                <div>
+                  <dt>Temp</dt>
+                  <dd>{aiConfig.temperature}</dd>
+                </div>
+              </dl>
+              <p className="prompt-preview">{aiConfig.systemPrompt}</p>
+              <form className="chat-form" onSubmit={handleAskAssistant}>
+                <input
+                  aria-label="Support chatbot question"
+                  value={chatQuestion}
+                  onChange={(event) => setChatQuestion(event.target.value)}
+                />
+                <button className="sample-button" type="submit">
+                  Ask
+                </button>
+              </form>
+              <div className="chat-history">
+                {chatHistory.length ? (
+                  chatHistory.map((message) => (
+                    <article className="chat-message" key={message.id}>
+                      <span>{message.question}</span>
+                      <p>{message.answer}</p>
+                      <div className="chat-actions">
+                        <small>{message.model} at {message.at}</small>
+                        <button type="button" onClick={() => handleHelpfulClick(message, true)}>
+                          Helpful
+                        </button>
+                        <button type="button" onClick={() => handleHelpfulClick(message, false)}>
+                          Escalate
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty-chat">{aiConfig.welcomeMessage}</p>
+                )}
+              </div>
+            </section>
+
             <section className="console-section" aria-label="Context targeting">
               <div className="section-title compact">
                 <UserRound size={18} />
@@ -379,6 +489,44 @@ function Attribute({ label, value }) {
       <strong>{value}</strong>
     </div>
   );
+}
+
+function normalizeAiConfig(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return defaultAiConfig;
+  }
+
+  return {
+    ...defaultAiConfig,
+    ...value,
+    temperature: Number.isFinite(Number(value.temperature))
+      ? Number(value.temperature)
+      : defaultAiConfig.temperature,
+    escalationThreshold: Number.isFinite(Number(value.escalationThreshold))
+      ? Number(value.escalationThreshold)
+      : defaultAiConfig.escalationThreshold
+  };
+}
+
+function generateSupportAnswer(question, config) {
+  const normalizedQuestion = question.toLowerCase();
+  const stylePrefix = config.responseStyle === "empathetic"
+    ? "I understand why you would want a safe path here."
+    : "Recommended path:";
+
+  if (normalizedQuestion.includes("rollback") || normalizedQuestion.includes("risky")) {
+    return `${stylePrefix} use the feature flag kill switch first, confirm the app receives the update without reload, and then invoke the remediation trigger if the release is causing customer impact.`;
+  }
+
+  if (normalizedQuestion.includes("billing") || normalizedQuestion.includes("invoice")) {
+    return `${stylePrefix} check the account plan and billing owner, then escalate if payment or contract details are required.`;
+  }
+
+  if (normalizedQuestion.includes("onboard") || normalizedQuestion.includes("setup")) {
+    return `${stylePrefix} start with the client-side ID, verify the first SDK event in LaunchDarkly, then create targeting rules for the first customer cohort.`;
+  }
+
+  return `${stylePrefix} answer with the current product documentation, ask one clarifying question, and escalate when confidence is below ${config.escalationThreshold}.`;
 }
 
 export default App;

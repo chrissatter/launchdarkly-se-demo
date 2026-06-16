@@ -225,7 +225,8 @@ h2 {
   padding: 14px;
 }
 
-.experiment-panel {
+.experiment-panel,
+.ai-panel {
   display: grid;
   gap: 12px;
 }
@@ -339,6 +340,72 @@ dd {
 .sample-button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.prompt-preview,
+.empty-chat {
+  margin-bottom: 0;
+  color: #657169;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.chat-form input {
+  min-width: 0;
+  border: 1px solid #d8dfd2;
+  padding: 0 10px;
+  color: #17211b;
+  background: #ffffff;
+}
+
+.chat-history {
+  display: grid;
+  gap: 10px;
+}
+
+.chat-message {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e0e6dc;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.chat-message span {
+  font-weight: 800;
+}
+
+.chat-message p {
+  margin-bottom: 0;
+  color: #39453d;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-actions small {
+  margin-right: auto;
+  color: #657169;
+}
+
+.chat-actions button {
+  border: 1px solid #d8dfd2;
+  background: #f8faf6;
+  color: #17211b;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 .context-card span {
@@ -467,6 +534,10 @@ ol {
   .primary-button,
   .secondary-button {
     width: 100%;
+  }
+
+  .chat-form {
+    grid-template-columns: 1fr;
   }
 
   .flag-table div {

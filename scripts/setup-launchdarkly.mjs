@@ -7,11 +7,42 @@ const ENV_KEY = process.env.LD_ENV_KEY || "test";
 const TOKEN = process.env.LD_API_TOKEN;
 const CREATE_TRIGGER = process.env.LD_CREATE_TRIGGER === "true";
 
+const AI_CONFIG_KEY = "support-chatbot-ai-config";
 const DEMO_TARGET_KEY = "alice-beta-001";
 const ENTERPRISE_RULE_VALUE = "enterprise";
 const EXPERIMENT_COHORT = "landing-page-q3";
 const METRIC_KEY = "landing-page-cta-clicked";
 const METRIC_EVENT_KEY = "hero-cta-clicked";
+const AI_CONFIG_VARIATIONS = [
+  {
+    value: {
+      name: "Concise support guide",
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      systemPrompt:
+        "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.",
+      welcomeMessage: "Ask about onboarding, billing, incidents, or release safety.",
+      responseStyle: "concise",
+      escalationThreshold: 0.7,
+    },
+    name: "concise",
+    description: "Lower-cost concise support configuration",
+  },
+  {
+    value: {
+      name: "Empathetic escalation guide",
+      model: "gpt-4o",
+      temperature: 0.45,
+      systemPrompt:
+        "You are an empathetic ABC SaaS support assistant. Reassure the customer, provide step-by-step help, and escalate quickly for account-specific or incident-impacting questions.",
+      welcomeMessage: "Ask me about a support issue and I will guide the next safe action.",
+      responseStyle: "empathetic",
+      escalationThreshold: 0.55,
+    },
+    name: "empathetic",
+    description: "Higher-touch support configuration",
+  },
+];
 
 if (!TOKEN) {
   console.error("Missing LD_API_TOKEN. Create a LaunchDarkly API token and export it before running this script.");
@@ -113,6 +144,10 @@ async function getFlag() {
   return optionalLdRequest(`/flags/${PROJECT_KEY}/${FLAG_KEY}?filterEnv=${ENV_KEY}`);
 }
 
+async function getAiConfigFlag() {
+  return optionalLdRequest(`/flags/${PROJECT_KEY}/${AI_CONFIG_KEY}?filterEnv=${ENV_KEY}`);
+}
+
 async function getMetric() {
   return optionalLdRequest(`/metrics/${PROJECT_KEY}/${METRIC_KEY}`);
 }
@@ -151,6 +186,30 @@ async function createFlag() {
   });
 }
 
+async function createAiConfigFlag() {
+  console.log(`Creating AI config flag ${AI_CONFIG_KEY} in project ${PROJECT_KEY}...`);
+
+  return ldRequest(`/flags/${PROJECT_KEY}`, {
+    method: "POST",
+    body: JSON.stringify({
+      name: "Support chatbot AI config",
+      key: AI_CONFIG_KEY,
+      description:
+        "Client-side demo configuration for changing chatbot prompts, models, temperature, and response style.",
+      variations: AI_CONFIG_VARIATIONS,
+      defaults: {
+        onVariation: 0,
+        offVariation: 0,
+      },
+      clientSideAvailability: {
+        usingEnvironmentId: true,
+        usingMobileKey: false,
+      },
+      tags: ["se-demo", "ai-config"],
+    }),
+  });
+}
+
 async function ensureFlag() {
   const existing = await getFlag();
 
@@ -168,6 +227,25 @@ async function ensureFlag() {
   }
 
   return getFlag();
+}
+
+async function ensureAiConfigFlag() {
+  const existing = await getAiConfigFlag();
+
+  if (existing) {
+    console.log(`Using existing AI config flag ${AI_CONFIG_KEY}.`);
+    return existing;
+  }
+
+  try {
+    await createAiConfigFlag();
+  } catch (error) {
+    if (error.status !== 409) {
+      throw error;
+    }
+  }
+
+  return getAiConfigFlag();
 }
 
 async function patchFlag(instructions, comment) {
@@ -340,6 +418,7 @@ function printSummary({ environment, trigger }) {
   console.log(`Rule serving true: user.plan is one of ${ENTERPRISE_RULE_VALUE}`);
   console.log(`Experiment rule serving false until experiment runs: user.experimentCohort is one of ${EXPERIMENT_COHORT}`);
   console.log(`Experiment metric: ${METRIC_KEY} listens for ${METRIC_EVENT_KEY}`);
+  console.log(`AI config flag: ${AI_CONFIG_KEY}`);
   console.log("Default and off variation: false");
 }
 
@@ -349,6 +428,7 @@ try {
   flag = await ensureClientSideAvailability(flag);
   flag = await configureTargeting(flag);
   await ensureMetric();
+  await ensureAiConfigFlag();
 
   let trigger = null;
   if (CREATE_TRIGGER) {

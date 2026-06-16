@@ -8,6 +8,7 @@ React + Vite demo for the LaunchDarkly SE homework. The app presents a mock ABC 
 - Individual targeting and rule-based targeting
 - Remediation trigger workflow
 - CTA event tracking for experimentation
+- AI Config-style chatbot prompt and model control
 
 The primary feature flag is:
 
@@ -26,6 +27,7 @@ new-landing-page-hero
 - [Part 1: Release and Remediate](#part-1-release-and-remediate)
 - [Part 2: Target](#part-2-target)
 - [Extra Credit: Experimentation](#extra-credit-experimentation)
+- [Extra Credit: AI Configs](#extra-credit-ai-configs)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
@@ -80,6 +82,7 @@ The fastest repeatable setup is the included REST script. It uses LaunchDarkly's
 - Add the rule `user.plan is one of enterprise -> true`
 - Add the experiment cohort rule `user.experimentCohort is one of landing-page-q3 -> false`
 - Create the metric `landing-page-cta-clicked` for the custom event `hero-cta-clicked`
+- Create the AI config flag `support-chatbot-ai-config`
 - Optionally create a generic remediation trigger that turns the flag off
 
 Create a LaunchDarkly API token with write access to flags and metrics, then run:
@@ -107,7 +110,7 @@ LD_REMEDIATION_TRIGGER_URL=...
 
 Keep `LD_API_TOKEN` and the real trigger URL out of Git. The trigger URL is sensitive because anyone with it can invoke the rollback.
 
-The REST script prepares the flag, targeting rules, and metric. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
+The REST script prepares the flag, targeting rules, metric, and chatbot configuration flag. Create and start the experiment in the LaunchDarkly UI using the settings in **Extra Credit: Experimentation**.
 
 ### Option B: Manual UI Setup
 
@@ -231,6 +234,49 @@ The REST script prepares the flag, targeting rules, and metric. Create and start
    Randomization unit: user
    ```
 
+12. Create the chatbot AI config.
+
+   If your LaunchDarkly account has **AgentControl / AI Configs**, create an AI Config for the support chatbot with these two variations:
+
+   ```text
+   Config key: support-chatbot-ai-config
+   Variation: Concise support guide
+   Model: gpt-4o-mini
+   Temperature: 0.2
+   Prompt: You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.
+   ```
+
+   ```text
+   Variation: Empathetic escalation guide
+   Model: gpt-4o
+   Temperature: 0.45
+   Prompt: You are an empathetic ABC SaaS support assistant. Reassure the customer, provide step-by-step help, and escalate quickly for account-specific or incident-impacting questions.
+   ```
+
+   If AI Configs are not enabled in the trial, create a JSON feature flag instead:
+
+   ```text
+   Name: Support chatbot AI config
+   Key: support-chatbot-ai-config
+   Variations: JSON
+   Available on client-side SDKs: enabled
+   Default/off variation: Concise support guide JSON
+   ```
+
+   Example JSON variation:
+
+   ```json
+   {
+     "name": "Concise support guide",
+     "model": "gpt-4o-mini",
+     "temperature": 0.2,
+     "systemPrompt": "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues.",
+     "welcomeMessage": "Ask about onboarding, billing, incidents, or release safety.",
+     "responseStyle": "concise",
+     "escalationThreshold": 0.7
+   }
+   ```
+
 ### Option C: Terraform Setup
 
 Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. Use the official LaunchDarkly Terraform provider and model the same state as the REST script:
@@ -245,6 +291,7 @@ Individual target: user alice-beta-001 serves true
 Rule: user.plan is one of enterprise serves true
 Rule: user.experimentCohort is one of landing-page-q3 serves false
 Metric: landing-page-cta-clicked listens for hero-cta-clicked
+AI config flag: support-chatbot-ai-config
 ```
 
 See [terraform/README.md](terraform/README.md) for the Terraform workflow notes.
@@ -378,6 +425,53 @@ For a reviewer demo:
 
 For a real product decision, do not rely on the synthetic traffic generator. Run the experiment against real eligible traffic until LaunchDarkly shows enough sample size and confidence to make a decision.
 
+## Extra Credit: AI Configs
+
+Scenario: ABC Company is rolling out a customer support chatbot and wants product managers to change prompts and models without redeploying the app.
+
+The app includes an **AI Config** panel in the right-side demo console. It reads this LaunchDarkly-controlled config:
+
+```text
+support-chatbot-ai-config
+```
+
+The config controls:
+
+```text
+Model
+Temperature
+System prompt
+Welcome message
+Response style
+Escalation threshold
+```
+
+When the config changes in LaunchDarkly, the chatbot panel updates without a code change or redeploy. If you use an AI Config / AgentControl-enabled tenant, map the values above into an AI Config. If not, use the JSON flag fallback created by the REST setup script.
+
+### Optional AI Experiment
+
+To test prompt and model variants, create metrics from these app events:
+
+```text
+chatbot-message-sent
+chatbot-helpful-clicked
+chatbot-escalation-clicked
+```
+
+Suggested experiment:
+
+```text
+Name: Support chatbot AI config experiment
+Hypothesis: The empathetic escalation guide improves helpful feedback without increasing escalations.
+Config or flag: support-chatbot-ai-config
+Primary metric: chatbot-helpful-clicked
+Guardrail metric: chatbot-escalation-clicked
+Audience: user.plan is one of pro, enterprise
+Split: 50% concise, 50% empathetic
+```
+
+For a reviewer demo, ask the chatbot a support question, switch the config variation in LaunchDarkly, and ask again. The visible model, prompt, and generated response style should change immediately.
+
 ## Demo Script
 
 1. Start with the flag off and show the control landing page.
@@ -387,7 +481,8 @@ For a real product decision, do not rely on the synthetic traffic generator. Run
    - Add a rule where `plan` is `enterprise` or `companySize` is greater than `1000` for rule-based targeting.
 4. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
 5. Start the experiment and click **Generate sample traffic** to send sample exposure and conversion events.
-6. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
+6. Change `support-chatbot-ai-config` and show the chatbot model, prompt, and response style updating.
+7. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
 
 ## Notes for Reviewers
 
