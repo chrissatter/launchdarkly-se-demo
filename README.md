@@ -478,13 +478,15 @@ export LD_CLEANUP_CONFIRM=delete-demo-resources
 npm run ld:cleanup
 ```
 
-The confirmed cleanup archives related experiments first, then deletes:
+The confirmed cleanup archives related experiments first, deletes the demo flags, and then attempts to delete the metric:
 
 ```text
-landing-page-cta-clicked
 support-chatbot-ai-config
 new-landing-page-hero
+landing-page-cta-clicked
 ```
+
+LaunchDarkly may retain `landing-page-cta-clicked` if an archived experiment still references it. That is safe for reruns because setup will reuse the metric.
 
 It does not delete your LaunchDarkly project, environment, API token, or local `.env` file.
 

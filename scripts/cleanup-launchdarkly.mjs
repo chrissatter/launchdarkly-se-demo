@@ -11,11 +11,6 @@ const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
 
 const resources = [
   {
-    type: "metric",
-    key: METRIC_KEY,
-    path: `/metrics/${PROJECT_KEY}/${METRIC_KEY}`,
-  },
-  {
     type: "flag",
     key: "support-chatbot-ai-config",
     path: `/flags/${PROJECT_KEY}/support-chatbot-ai-config`,
@@ -24,6 +19,11 @@ const resources = [
     type: "flag",
     key: FLAG_KEY,
     path: `/flags/${PROJECT_KEY}/${FLAG_KEY}`,
+  },
+  {
+    type: "metric",
+    key: METRIC_KEY,
+    path: `/metrics/${PROJECT_KEY}/${METRIC_KEY}`,
   },
 ];
 
@@ -126,10 +126,18 @@ async function deleteResource(resource) {
   try {
     await ldRequest(resource.path, { method: "DELETE" });
     console.log(`Deleted ${resource.type}: ${resource.key}`);
+    return { status: "deleted", resource };
   } catch (error) {
     if (error.status === 404) {
       console.log(`Already absent ${resource.type}: ${resource.key}`);
-      return;
+      return { status: "absent", resource };
+    }
+
+    if (resource.type === "metric" && error.status === 409) {
+      console.log(`Retained metric: ${resource.key}`);
+      console.log(`  LaunchDarkly still reports this metric as in use: ${error.body?.message || error.message}`);
+      console.log("  This is safe for reruns because setup will reuse the existing metric.");
+      return { status: "retained", resource, error };
     }
 
     throw error;
@@ -180,12 +188,20 @@ try {
   console.log("");
   console.log("Deleting demo resources...");
 
+  const retained = [];
   for (const resource of existing) {
-    await deleteResource(resource);
+    const result = await deleteResource(resource);
+    if (result.status === "retained") {
+      retained.push(result.resource);
+    }
   }
 
   console.log("");
-  console.log("LaunchDarkly cleanup complete.");
+  if (retained.length) {
+    console.log(`LaunchDarkly cleanup complete with retained resource(s): ${retained.map((resource) => resource.key).join(", ")}`);
+  } else {
+    console.log("LaunchDarkly cleanup complete.");
+  }
 } catch (error) {
   console.error("");
   console.error("LaunchDarkly cleanup failed.");
