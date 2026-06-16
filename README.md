@@ -32,6 +32,9 @@ landing-page-cta-clicked
   - [Manual UI Setup](#manual-ui-setup)
   - [Terraform Setup](#terraform-setup)
 - [Cleanup](#cleanup)
+  - [Option 1: REST API Cleanup](#option-1-rest-api-cleanup)
+  - [Option 2: Manual UI Cleanup](#option-2-manual-ui-cleanup)
+  - [Option 3: Terraform Cleanup](#option-3-terraform-cleanup)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
@@ -426,7 +429,11 @@ environment-level default/off behavior
 
 Use the cleanup path that matches how you created the LaunchDarkly resources.
 
-For the REST API setup, run a dry run:
+### Option 1: REST API Cleanup
+
+Use this if you created resources with `npm run ld:setup`.
+
+Run a dry run:
 
 ```bash
 export LD_API_TOKEN="api-..."
@@ -452,7 +459,44 @@ new-landing-page-hero
 
 It does not delete your LaunchDarkly project, environment, API token, or local `.env` file.
 
-For the Terraform setup, destroy from the Terraform working directory:
+### Option 2: Manual UI Cleanup
+
+Use this if you created resources by clicking through the LaunchDarkly UI.
+
+1. Stop or archive any experiment that references:
+
+   ```text
+   new-landing-page-hero
+   landing-page-cta-clicked
+   ```
+
+2. Delete the experiment metric:
+
+   ```text
+   Data -> Metrics -> Landing page CTA clicked
+   ```
+
+3. Delete the demo flags:
+
+   ```text
+   Features -> Flags -> support-chatbot-ai-config
+   Features -> Flags -> new-landing-page-hero
+   ```
+
+4. Delete or ignore the local `.env` values:
+
+   ```text
+   VITE_LD_CLIENT_ID
+   LD_REMEDIATION_TRIGGER_URL
+   ```
+
+Do not delete the LaunchDarkly project, environment, or API token unless you created them only for this demo and no longer need them.
+
+### Option 3: Terraform Cleanup
+
+Use this if you created resources with Terraform.
+
+Destroy from the Terraform working directory:
 
 ```bash
 cd terraform
