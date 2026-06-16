@@ -1,19 +1,22 @@
 # LaunchDarkly SE Technical Exercise Demo
 
-React + Vite demo for the LaunchDarkly SE homework. The app presents a mock ABC SaaS landing page and demonstrates:
+React + Vite demo for the LaunchDarkly SE homework. The app presents a mock ABC SaaS landing page with a LaunchDarkly-powered demo console and demonstrates:
 
 - Safe release and rollback with `new-landing-page-hero`
 - Live flag change listening with no page reload
-- Context attributes for targeting
 - Individual targeting and rule-based targeting
-- Remediation trigger workflow
-- CTA event tracking for experimentation
+- Remediation trigger workflow via generated webhook URL
+- LaunchDarkly-hosted metric and experiment setup for CTA conversion
 - AI Config-style chatbot prompt and model control
+- REST API setup automation for repeatable tenant bootstrap
+- Terraform provider example for the integrations extra credit
 
-The primary feature flag is:
+Primary LaunchDarkly resources:
 
 ```text
 new-landing-page-hero
+support-chatbot-ai-config
+landing-page-cta-clicked
 ```
 
 ## Table of Contents
