@@ -426,7 +426,7 @@ environment-level default/off behavior
 
 Use the cleanup path that matches how you created the LaunchDarkly resources.
 
-For the REST API setup, first stop or archive any experiment that references `new-landing-page-hero` or `landing-page-cta-clicked`. Then run a dry run:
+For the REST API setup, run a dry run:
 
 ```bash
 export LD_API_TOKEN="api-..."
@@ -435,14 +435,14 @@ export LD_ENV_KEY="test"
 npm run ld:cleanup
 ```
 
-If the dry run lists only the demo resources you want to remove, rerun with confirmation:
+The dry run lists demo resources and any active experiments that reference `new-landing-page-hero` or `landing-page-cta-clicked`. If the dry run looks right, rerun with confirmation:
 
 ```bash
 export LD_CLEANUP_CONFIRM=delete-demo-resources
 npm run ld:cleanup
 ```
 
-The cleanup script deletes:
+The confirmed cleanup archives related experiments first, then deletes:
 
 ```text
 landing-page-cta-clicked

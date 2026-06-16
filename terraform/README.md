@@ -110,6 +110,8 @@ Terraform only removes resources it manages in state. If you also ran the REST s
 npm run ld:cleanup
 ```
 
+The REST cleanup script runs as a dry run by default. When confirmed, it archives active experiments that reference the demo flag or metric before deleting REST-created resources.
+
 ## Reviewer Talk Track
 
 Use this as the integration story:

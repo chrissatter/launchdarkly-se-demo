@@ -2,7 +2,9 @@
 
 const API_BASE = "https://app.launchdarkly.com/api/v2";
 const PROJECT_KEY = process.env.LD_PROJECT_KEY || "default";
+const ENV_KEY = process.env.LD_ENV_KEY || "test";
 const FLAG_KEY = process.env.LD_FLAG_KEY || "new-landing-page-hero";
+const METRIC_KEY = "landing-page-cta-clicked";
 const TOKEN = process.env.LD_API_TOKEN;
 const CONFIRM_VALUE = "delete-demo-resources";
 const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
@@ -10,8 +12,8 @@ const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
 const resources = [
   {
     type: "metric",
-    key: "landing-page-cta-clicked",
-    path: `/metrics/${PROJECT_KEY}/landing-page-cta-clicked`,
+    key: METRIC_KEY,
+    path: `/metrics/${PROJECT_KEY}/${METRIC_KEY}`,
   },
   {
     type: "flag",
@@ -54,6 +56,14 @@ async function ldRequest(path, options = {}) {
   return body;
 }
 
+function collectionItems(body) {
+  if (Array.isArray(body)) {
+    return body;
+  }
+
+  return body?.items || [];
+}
+
 async function exists(resource) {
   try {
     await ldRequest(resource.path);
@@ -65,6 +75,51 @@ async function exists(resource) {
 
     throw error;
   }
+}
+
+async function listExperiments(filter) {
+  const params = new URLSearchParams({
+    filter,
+    limit: "100",
+    lifecycleState: "active",
+  });
+
+  const body = await ldRequest(`/projects/${PROJECT_KEY}/environments/${ENV_KEY}/experiments?${params}`);
+  return collectionItems(body);
+}
+
+async function findRelatedExperiments() {
+  const byKey = new Map();
+  const filters = [`flagKey:${FLAG_KEY}`, `metricKey:${METRIC_KEY}`];
+
+  for (const filter of filters) {
+    for (const experiment of await listExperiments(filter)) {
+      byKey.set(experiment.key, experiment);
+    }
+  }
+
+  return [...byKey.values()];
+}
+
+function experimentStatus(experiment) {
+  return experiment.currentIteration?.status || experiment.draftIteration?.status || "not started";
+}
+
+async function archiveExperiment(experiment) {
+  if (experiment.archivedDate) {
+    console.log(`Already archived experiment: ${experiment.name || experiment.key}`);
+    return;
+  }
+
+  await ldRequest(`/projects/${PROJECT_KEY}/environments/${ENV_KEY}/experiments/${experiment.key}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      comment: "Archive LaunchDarkly SE demo experiment before cleanup",
+      instructions: [{ kind: "archiveExperiment" }],
+    }),
+  });
+
+  console.log(`Archived experiment: ${experiment.name || experiment.key}`);
 }
 
 async function deleteResource(resource) {
@@ -82,7 +137,20 @@ async function deleteResource(resource) {
 }
 
 try {
-  console.log(`LaunchDarkly cleanup target: project ${PROJECT_KEY}`);
+  console.log(`LaunchDarkly cleanup target: project ${PROJECT_KEY}, environment ${ENV_KEY}`);
+  console.log("");
+
+  const experiments = await findRelatedExperiments();
+  if (experiments.length) {
+    console.log("Found related experiment(s):");
+
+    for (const experiment of experiments) {
+      console.log(`- ${experiment.name || experiment.key} (${experiment.key}, ${experimentStatus(experiment)})`);
+    }
+  } else {
+    console.log("No active experiments found for the demo flag or metric.");
+  }
+
   console.log("");
 
   const existing = [];
@@ -100,6 +168,13 @@ try {
     console.log("Dry run only. No LaunchDarkly resources were deleted.");
     console.log(`To delete the resources above, rerun with LD_CLEANUP_CONFIRM=${CONFIRM_VALUE}.`);
     process.exit(0);
+  }
+
+  console.log("");
+  console.log("Archiving related experiments...");
+
+  for (const experiment of experiments) {
+    await archiveExperiment(experiment);
   }
 
   console.log("");
@@ -121,6 +196,6 @@ try {
   }
 
   console.error("");
-  console.error("If an experiment still references a flag or metric, stop/archive that experiment in LaunchDarkly and rerun cleanup.");
+  console.error("If LaunchDarkly reports an experiment dependency, stop or archive that experiment in the UI and rerun cleanup.");
   process.exit(1);
 }
