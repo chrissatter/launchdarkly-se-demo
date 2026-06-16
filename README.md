@@ -86,7 +86,25 @@ The fastest repeatable setup is the included REST script. It uses LaunchDarkly's
 - Create the AI config flag `support-chatbot-ai-config`
 - Optionally create a generic remediation trigger that turns the flag off
 
-Create a LaunchDarkly API token with write access to flags and metrics, then run:
+Create a LaunchDarkly API token with write access to flags and metrics.
+
+LaunchDarkly documentation:
+
+```text
+https://launchdarkly.com/docs/home/account/api
+```
+
+For this demo, use:
+
+```text
+Role: Writer or Admin
+API version: latest available
+Service token: recommended if available
+```
+
+Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and optionally triggers, so read-only access will fail.
+
+Then run:
 
 ```bash
 export LD_API_TOKEN="api-..."

@@ -46,7 +46,15 @@ npm install
 cp .env.example .env
 ```
 
-Create a LaunchDarkly API token with write access to the target project, then run:
+Create a LaunchDarkly API token with write access to the target project. Use `Writer` or `Admin`; `Reader` is not sufficient because Terraform needs to create and update LaunchDarkly resources.
+
+LaunchDarkly API token documentation:
+
+```text
+https://launchdarkly.com/docs/home/account/api
+```
+
+Then run:
 
 ```bash
 cd terraform
