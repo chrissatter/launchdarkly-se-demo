@@ -295,7 +295,7 @@ Metric: landing-page-cta-clicked listens for hero-cta-clicked
 AI config flag: support-chatbot-ai-config
 ```
 
-See [terraform/README.md](terraform/README.md) for the Terraform workflow notes.
+See [terraform/README.md](terraform/README.md) for a fresh-clone Terraform workflow, reviewer talk track, and integration boundaries.
 
 ## Part 1: Release and Remediate
 
@@ -489,7 +489,7 @@ client-side SDK availability
 environment-level default/off behavior
 ```
 
-Use:
+From a fresh clone, use:
 
 ```bash
 cd terraform
