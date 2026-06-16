@@ -146,6 +146,8 @@ The REST script uses LaunchDarkly's API to:
 
 The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
 
+If setup finds an archived demo flag with the same key, it stops with a recovery message. Restore the flag in the LaunchDarkly UI, or run the REST cleanup flow below and then run setup again.
+
 ## Part 1: Release and Remediate
 
 Scenario: ABC Company wants to release features faster without increasing risk. This demo wraps a new landing page hero in a LaunchDarkly feature flag so the feature can be released, rolled back, and remediated without a deployment.
