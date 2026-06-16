@@ -1,0 +1,70 @@
+# Terraform Option
+
+Use Terraform if you want the LaunchDarkly tenant setup to be repeatable infrastructure instead of a one-time UI or REST setup.
+
+The official LaunchDarkly provider is here:
+
+```text
+https://registry.terraform.io/providers/launchdarkly/launchdarkly/latest/docs
+```
+
+## Suggested Shape
+
+Model these resources:
+
+- `launchdarkly_feature_flag` for `new-landing-page-hero`
+- `launchdarkly_feature_flag_environment` for the `test` environment behavior
+
+The desired end state should match the REST script:
+
+```text
+Flag key: new-landing-page-hero
+Variations: true, false
+Client-side SDK availability: enabled
+Environment: test
+Flag targeting: on
+Off variation: false
+Default/fallthrough variation: false
+Individual target: user alice-beta-001 serves true
+Rule: if user.plan is one of enterprise, serve true
+```
+
+## Example Workflow
+
+1. Create a LaunchDarkly API token with write access to the project.
+2. Export it for Terraform:
+
+   ```bash
+   export TF_VAR_launchdarkly_access_token="api-..."
+   ```
+
+3. Copy the example into place:
+
+   ```bash
+   cp terraform/main.tf.example terraform/main.tf
+   ```
+
+4. Review `terraform/main.tf` and adjust `project_key` or `environment_key` if your tenant does not use `default` and `test`.
+
+5. Run:
+
+   ```bash
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+6. Copy the environment Client-side ID into the app's `.env`:
+
+   ```bash
+   VITE_LD_CLIENT_ID=your-client-side-id
+   ```
+
+## Important Notes
+
+The example manages the flag and environment targeting. The remediation trigger is easier to create with the REST setup script because LaunchDarkly's Terraform provider focuses on flag resources, while the REST API can return the generated `triggerURL` directly.
+
+## Why This Repo Uses REST First
+
+The REST script is intentionally lightweight for a demo review: it does not require Terraform to be installed, it can print the client-side ID directly, and it can optionally create the generic remediation trigger URL. Terraform is still the better path if this demo needs to be recreated many times or promoted into a formal enablement asset.

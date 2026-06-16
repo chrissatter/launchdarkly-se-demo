@@ -1,0 +1,87 @@
+terraform {
+  required_providers {
+    launchdarkly = {
+      source  = "launchdarkly/launchdarkly"
+      version = "~> 2.0"
+    }
+  }
+}
+
+variable "launchdarkly_access_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "project_key" {
+  type    = string
+  default = "default"
+}
+
+variable "environment_key" {
+  type    = string
+  default = "test"
+}
+
+provider "launchdarkly" {
+  access_token = var.launchdarkly_access_token
+}
+
+resource "launchdarkly_feature_flag" "landing_hero" {
+  project_key = var.project_key
+  key         = "new-landing-page-hero"
+  name        = "new-landing-page-hero"
+  description = "LaunchDarkly SE demo flag for safe release, targeting, and remediation."
+
+  variation_type = "boolean"
+
+  variations {
+    name  = "true"
+    value = true
+  }
+
+  variations {
+    name  = "false"
+    value = false
+  }
+
+  defaults {
+    on_variation  = 1
+    off_variation = 1
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = false
+  }
+
+  tags = ["se-demo"]
+}
+
+resource "launchdarkly_feature_flag_environment" "test" {
+  flag_id = launchdarkly_feature_flag.landing_hero.id
+  env_key = var.environment_key
+
+  on            = true
+  off_variation = 1
+
+  fallthrough {
+    variation = 1
+  }
+
+  targets {
+    values    = ["alice-beta-001"]
+    variation = 0
+  }
+
+  rules {
+    variation = 0
+
+    clauses {
+      context_kind = "user"
+      attribute    = "plan"
+      op           = "in"
+      values       = ["enterprise"]
+      negate       = false
+    }
+  }
+}

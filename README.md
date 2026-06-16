@@ -1,0 +1,304 @@
+# LaunchDarkly SE Technical Exercise Demo
+
+React + Vite demo for the LaunchDarkly SE homework. The app presents a mock ABC SaaS landing page and demonstrates:
+
+- Safe release and rollback with `new-landing-page-hero`
+- Live flag change listening with no page reload
+- Context attributes for targeting
+- Individual targeting and rule-based targeting
+- Remediation trigger workflow
+- CTA event tracking for experimentation
+
+The primary feature flag is:
+
+```text
+new-landing-page-hero
+```
+
+## Table of Contents
+
+- [Local Machine Setup](#local-machine-setup)
+  - [Using This Repo](#using-this-repo)
+- [LaunchDarkly Tenant Setup](#launchdarkly-tenant-setup)
+  - [Option A: REST API Setup](#option-a-rest-api-setup)
+  - [Option B: Manual UI Setup](#option-b-manual-ui-setup)
+  - [Option C: Terraform Setup](#option-c-terraform-setup)
+- [Part 1: Release and Remediate](#part-1-release-and-remediate)
+- [Part 2: Target](#part-2-target)
+- [Demo Script](#demo-script)
+- [Notes for Reviewers](#notes-for-reviewers)
+
+## Local Machine Setup
+
+### Using This Repo
+
+1. Clone the repository:
+
+   ```bash
+   git clone <repo-url>
+   cd LaunchDarkly
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create an environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Configure LaunchDarkly environment values.
+
+   Follow one of the **LaunchDarkly Tenant Setup** options below, then add the resulting values to `.env`.
+
+5. Run the app:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open the local URL printed by Vite, usually `http://localhost:5173/`.
+
+## LaunchDarkly Tenant Setup
+
+Use these steps to recreate the demo in a new LaunchDarkly tenant.
+
+### Option A: REST API Setup
+
+The fastest repeatable setup is the included REST script. It uses LaunchDarkly's REST API to:
+
+- Create or reuse `new-landing-page-hero`
+- Enable client-side SDK availability
+- Turn targeting on for the selected environment
+- Set the off/default behavior to `false`
+- Add the individual target `alice-beta-001 -> true`
+- Add the rule `user.plan is one of enterprise -> true`
+- Optionally create a generic remediation trigger that turns the flag off
+
+Create a LaunchDarkly API token with write access to the project, then run:
+
+```bash
+export LD_API_TOKEN="api-..."
+export LD_PROJECT_KEY="default"
+export LD_ENV_KEY="test"
+npm run ld:setup
+```
+
+To create the remediation trigger during setup:
+
+```bash
+export LD_CREATE_TRIGGER=true
+npm run ld:setup
+```
+
+The script prints the values to copy into `.env`:
+
+```bash
+VITE_LD_CLIENT_ID=...
+LD_REMEDIATION_TRIGGER_URL=...
+```
+
+Keep `LD_API_TOKEN` and the real trigger URL out of Git. The trigger URL is sensitive because anyone with it can invoke the rollback.
+
+### Option B: Manual UI Setup
+
+1. Create or choose a LaunchDarkly project and environment.
+
+   This README assumes the environment is named `Test`, but any environment works as long as its Client-side ID is used in `.env`.
+
+2. Copy the environment's **Client-side ID**.
+
+   Add it to `.env`:
+
+   ```bash
+   VITE_LD_CLIENT_ID=your-client-side-id
+   ```
+
+   Use the Client-side ID, not the server-side SDK key.
+
+3. Create a boolean feature flag:
+
+   ```text
+   Name: new-landing-page-hero
+   Key: new-landing-page-hero
+   Variations: Boolean
+   On variation: true
+   Off variation: false
+   ```
+
+4. Enable browser SDK access for the flag.
+
+   In the flag's **Advanced controls**, turn on:
+
+   ```text
+   Available on client-side SDKs
+   ```
+
+5. Configure the basic release/rollback behavior.
+
+   For the Part 1 release demo:
+
+   ```text
+   Flag targeting: On
+   Default rule: serve true
+   Off variation: false
+   ```
+
+   Toggle the flag on and off while the local app is open. The hero and the Live listener panel should update without a browser refresh.
+
+6. Configure individual targeting for Part 2.
+
+   Keep flag targeting on, but set the default rule to serve `false`. Add this individual target:
+
+   ```text
+   Context kind: user
+   Context key: alice-beta-001
+   Serve: true
+   ```
+
+   If the context is not searchable yet, open the local app and click **Individually targeted beta user** once. This sends the context to LaunchDarkly.
+
+7. Configure rule-based targeting for Part 2.
+
+   Add a custom rule:
+
+   ```text
+   Rule name: Enterprise plan visitors
+   Context kind: user
+   Attribute: plan
+   Operator: is one of
+   Value: enterprise
+   Serve: true
+   ```
+
+   The app's **Enterprise rule match** context sends `plan: "enterprise"`.
+
+8. Create a remediation trigger.
+
+   From the flag's environment configuration, add a trigger that turns flag targeting off. Use a generic trigger, copy the generated URL, and store it locally:
+
+   ```bash
+   LD_REMEDIATION_TRIGGER_URL=your-launchdarkly-trigger-url
+   ```
+
+   Trigger URLs are sensitive because anyone with the URL can invoke the action. Do not commit the real URL.
+
+9. Test remediation.
+
+   With the app showing a `true` variation, run:
+
+   ```bash
+   curl -X POST "$LD_REMEDIATION_TRIGGER_URL"
+   ```
+
+   LaunchDarkly should turn the flag off, and the local app should roll back to the control hero.
+
+### Option C: Terraform Setup
+
+Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. Use the official LaunchDarkly Terraform provider and model the same state as the REST script:
+
+```text
+Flag: new-landing-page-hero
+Environment: test
+Client-side SDK availability: enabled
+Targeting: on
+Off/default variation: false
+Individual target: user alice-beta-001 serves true
+Rule: user.plan is one of enterprise serves true
+```
+
+See [terraform/README.md](terraform/README.md) for the Terraform workflow notes.
+
+## Part 1: Release and Remediate
+
+Scenario: ABC Company wants to release features faster without increasing risk. This demo wraps a new landing page hero in a LaunchDarkly feature flag so the feature can be released, rolled back, and remediated without a deployment.
+
+### Feature Flag
+
+The flag `new-landing-page-hero` controls the landing page hero.
+
+- `false`: control experience, "Reliable operations for modern SaaS teams"
+- `true`: new experience, "Launch the new customer experience without waiting for deploys"
+
+To demonstrate release and rollback:
+
+1. Start with the flag off. The local app should show the control hero and `Raw value: false`.
+2. Turn the flag on in LaunchDarkly and serve `true` to the current context.
+3. The app should switch to the new hero.
+4. Turn the flag off again.
+5. The app should roll back to the control hero.
+
+### Instant Releases and Rollbacks
+
+The app subscribes to LaunchDarkly flag updates with a change listener:
+
+```js
+ldClient.on("change:new-landing-page-hero", handleChange)
+```
+
+Keep the local app open while changing the flag in LaunchDarkly. The hero should update without a browser refresh, and the **Live listener** section in the right-side demo console should log the change event.
+
+### Remediation Trigger
+
+The remediation path uses a LaunchDarkly flag trigger that turns targeting off. I tested this by invoking the generated trigger URL with `curl`; after the request, LaunchDarkly showed the flag as off and the app rolled back to the control experience.
+
+Use the trigger URL from your local `.env`:
+
+```bash
+curl -X POST "$LD_REMEDIATION_TRIGGER_URL"
+```
+
+The same command can include optional incident context:
+
+```bash
+curl -X POST "$LD_REMEDIATION_TRIGGER_URL" \
+  -H "Content-Type: application/json" \
+  -d '{"eventName":"Demo incident: hero conversion errors","url":"http://localhost:5173"}'
+```
+
+This satisfies the remediation requirement: a problematic feature can be turned off manually via `curl` with minimal customer impact.
+
+## Part 2: Target
+
+The app includes a context switcher in the right-side demo console. Each card calls `ldClient.identify(...)` with different context attributes.
+
+Recommended LaunchDarkly targeting setup:
+
+1. Keep the flag on, but set the default rule to serve `false`.
+2. Add an individual target:
+
+   ```text
+   user key alice-beta-001 serves true
+   ```
+
+3. Add a rule-based target:
+
+   ```text
+   If user.plan is one of enterprise, serve true
+   ```
+
+Expected local behavior:
+
+- **Anonymous prospect**: receives `false` and sees the control hero.
+- **Individually targeted beta user**: receives `true` and sees the new hero.
+- **Enterprise rule match**: receives `true` through the `plan = enterprise` rule and sees the new hero.
+
+## Demo Script
+
+1. Start with the flag off and show the control landing page.
+2. Toggle the flag on in LaunchDarkly. The hero should switch to the new experience without a page reload.
+3. Use the context switcher:
+   - Target `alice-beta-001` directly for individual targeting.
+   - Add a rule where `plan` is `enterprise` or `companySize` is greater than `1000` for rule-based targeting.
+4. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
+5. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
+
+## Notes for Reviewers
+
+The app uses client-side LaunchDarkly evaluation because the exercise is focused on a landing-page experience and instant UI updates. The visible context switcher is intentionally part of the demo so reviewers can inspect targeting behavior without creating multiple accounts.
+
+Note: `npm audit` currently reports a Vite/esbuild development-tooling advisory. This demo does not ship Vite/esbuild to the browser. I did not run `npm audit fix --force` because it upgrades Vite across a breaking major version.
