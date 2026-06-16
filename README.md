@@ -104,6 +104,8 @@ Service token: recommended if available
 
 Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and optionally triggers, so read-only access will fail.
 
+The script uses LaunchDarkly semantic patch requests for flag targeting updates.
+
 Then run:
 
 ```bash

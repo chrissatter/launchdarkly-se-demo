@@ -85,6 +85,12 @@ async function optionalLdRequest(path, options = {}) {
   }
 }
 
+function semanticPatchHeaders() {
+  return {
+    "Content-Type": "application/json; domain-model=launchdarkly.semanticpatch",
+  };
+}
+
 function variationIdFor(flag, value) {
   const variation = flag.variations?.find((item) => item.value === value);
 
@@ -255,6 +261,7 @@ async function patchFlag(instructions, comment) {
 
   return ldRequest(`/flags/${PROJECT_KEY}/${FLAG_KEY}`, {
     method: "PATCH",
+    headers: semanticPatchHeaders(),
     body: JSON.stringify({
       environmentKey: ENV_KEY,
       comment,
@@ -270,6 +277,7 @@ async function patchGlobalFlag(instructions, comment) {
 
   return ldRequest(`/flags/${PROJECT_KEY}/${FLAG_KEY}`, {
     method: "PATCH",
+    headers: semanticPatchHeaders(),
     body: JSON.stringify({
       comment,
       instructions,
