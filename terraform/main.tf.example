@@ -97,3 +97,62 @@ resource "launchdarkly_feature_flag_environment" "test" {
     }
   }
 }
+
+resource "launchdarkly_feature_flag" "support_chatbot_ai_config" {
+  project_key = var.project_key
+  key         = "support-chatbot-ai-config"
+  name        = "Support chatbot AI config"
+  description = "JSON config flag used as the AgentControl fallback for chatbot prompt and model control."
+
+  variation_type = "json"
+
+  variations {
+    name = "concise"
+    value = jsonencode({
+      name                = "Concise support guide"
+      model               = "gpt-4o-mini"
+      temperature         = 0.2
+      systemPrompt        = "You are an ABC SaaS support assistant. Give concise, accurate answers, ask one clarifying question when needed, and recommend escalation for account-specific issues."
+      welcomeMessage      = "Ask about onboarding, billing, incidents, or release safety."
+      responseStyle       = "concise"
+      escalationThreshold = 0.7
+    })
+  }
+
+  variations {
+    name = "empathetic"
+    value = jsonencode({
+      name                = "Empathetic escalation guide"
+      model               = "gpt-4o"
+      temperature         = 0.45
+      systemPrompt        = "You are an empathetic ABC SaaS support assistant. Reassure the customer, provide step-by-step help, and escalate quickly for account-specific or incident-impacting questions."
+      welcomeMessage      = "Ask me about a support issue and I will guide the next safe action."
+      responseStyle       = "empathetic"
+      escalationThreshold = 0.55
+    })
+  }
+
+  defaults {
+    on_variation  = 0
+    off_variation = 0
+  }
+
+  client_side_availability {
+    using_environment_id = true
+    using_mobile_key     = false
+  }
+
+  tags = ["se-demo", "ai-config"]
+}
+
+resource "launchdarkly_feature_flag_environment" "support_chatbot_ai_config_test" {
+  flag_id = launchdarkly_feature_flag.support_chatbot_ai_config.id
+  env_key = var.environment_key
+
+  on            = true
+  off_variation = 0
+
+  fallthrough {
+    variation = 0
+  }
+}

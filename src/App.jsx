@@ -311,6 +311,26 @@ function App({ launchDarklyReady }) {
               </dl>
             </section>
 
+            <section className="console-section" aria-label="Context targeting">
+              <div className="section-title compact">
+                <UserRound size={18} />
+                <h2>Context targeting</h2>
+              </div>
+              <div className="context-list">
+                {demoContexts.map((context) => (
+                  <button
+                    className={activeContext.key === context.key ? "context-card selected" : "context-card"}
+                    key={context.key}
+                    type="button"
+                    onClick={() => identifyContext(context)}
+                  >
+                    <span>{context.label}</span>
+                    <small>{context.key}</small>
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="console-section experiment-panel" aria-label="Experimentation">
               <div className="section-title compact">
                 <MousePointerClick size={18} />
@@ -399,26 +419,6 @@ function App({ launchDarklyReady }) {
                 ) : (
                   <p className="empty-chat">{aiConfig.welcomeMessage}</p>
                 )}
-              </div>
-            </section>
-
-            <section className="console-section" aria-label="Context targeting">
-              <div className="section-title compact">
-                <UserRound size={18} />
-                <h2>Context targeting</h2>
-              </div>
-              <div className="context-list">
-                {demoContexts.map((context) => (
-                  <button
-                    className={activeContext.key === context.key ? "context-card selected" : "context-card"}
-                    key={context.key}
-                    type="button"
-                    onClick={() => identifyContext(context)}
-                  >
-                    <span>{context.label}</span>
-                    <small>{context.key}</small>
-                  </button>
-                ))}
               </div>
             </section>
 

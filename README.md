@@ -28,6 +28,7 @@ new-landing-page-hero
 - [Part 2: Target](#part-2-target)
 - [Extra Credit: Experimentation](#extra-credit-experimentation)
 - [Extra Credit: AI Configs](#extra-credit-ai-configs)
+- [Extra Credit: Integrations](#extra-credit-integrations)
 - [Demo Script](#demo-script)
 - [Notes for Reviewers](#notes-for-reviewers)
 
@@ -279,7 +280,7 @@ The REST script prepares the flag, targeting rules, metric, and chatbot configur
 
 ### Option C: Terraform Setup
 
-Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. Use the official LaunchDarkly Terraform provider and model the same state as the REST script:
+Terraform is also a good option if you want the LaunchDarkly tenant setup managed as infrastructure. It also satisfies the **Integrations** extra credit by using LaunchDarkly's Terraform integration/provider. Model the same state as the REST script:
 
 ```text
 Flag: new-landing-page-hero
@@ -472,6 +473,37 @@ Split: 50% concise, 50% empathetic
 
 For a reviewer demo, ask the chatbot a support question, switch the config variation in LaunchDarkly, and ask again. The visible model, prompt, and generated response style should change immediately.
 
+## Extra Credit: Integrations
+
+This repo uses Terraform as the LaunchDarkly integration story. LaunchDarkly lists Terraform in its integrations catalog, and the provider lets teams manage flags and targeting as infrastructure instead of relying only on UI clicks.
+
+The Terraform example provisions:
+
+```text
+new-landing-page-hero
+support-chatbot-ai-config
+individual targeting for alice-beta-001
+enterprise rule-based targeting
+experiment cohort targeting
+client-side SDK availability
+environment-level default/off behavior
+```
+
+Use:
+
+```bash
+cd terraform
+cp main.tf.example main.tf
+export TF_VAR_launchdarkly_access_token="api-..."
+terraform init
+terraform plan
+terraform apply
+```
+
+Then copy the environment Client-side ID into `.env` and run the app normally.
+
+The Terraform integration is a strong SE demo point because it shows how LaunchDarkly fits into an existing platform engineering workflow: application teams can review flag and targeting changes, promote them through pull requests, and keep tenant configuration reproducible.
+
 ## Demo Script
 
 1. Start with the flag off and show the control landing page.
@@ -482,7 +514,8 @@ For a reviewer demo, ask the chatbot a support question, switch the config varia
 4. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
 5. Start the experiment and click **Generate sample traffic** to send sample exposure and conversion events.
 6. Change `support-chatbot-ai-config` and show the chatbot model, prompt, and response style updating.
-7. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
+7. Show the Terraform example as the integration path for repeatable LaunchDarkly setup.
+8. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
 
 ## Notes for Reviewers
 

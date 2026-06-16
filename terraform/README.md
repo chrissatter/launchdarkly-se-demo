@@ -1,6 +1,6 @@
 # Terraform Option
 
-Use Terraform if you want the LaunchDarkly tenant setup to be repeatable infrastructure instead of a one-time UI or REST setup.
+Use Terraform if you want the LaunchDarkly tenant setup to be repeatable infrastructure instead of a one-time UI or REST setup. This also serves as the LaunchDarkly **Integrations** extra credit because Terraform is one of LaunchDarkly's supported integrations.
 
 The official LaunchDarkly provider is here:
 
@@ -14,6 +14,8 @@ Model these resources:
 
 - `launchdarkly_feature_flag` for `new-landing-page-hero`
 - `launchdarkly_feature_flag_environment` for the `test` environment behavior
+- `launchdarkly_feature_flag` for the `support-chatbot-ai-config` JSON AI config fallback
+- `launchdarkly_feature_flag_environment` for the chatbot config's environment behavior
 
 The desired end state should match the REST script:
 
@@ -29,6 +31,7 @@ Individual target: user alice-beta-001 serves true
 Rule: if user.plan is one of enterprise, serve true
 Rule: if user.experimentCohort is one of landing-page-q3, serve false
 Metric: landing-page-cta-clicked listens for hero-cta-clicked
+AI config flag: support-chatbot-ai-config serves concise by default
 ```
 
 ## Example Workflow
@@ -65,7 +68,7 @@ Metric: landing-page-cta-clicked listens for hero-cta-clicked
 
 ## Important Notes
 
-The example manages the flag and environment targeting rules. Create the experiment metric with the LaunchDarkly UI or REST setup script, then create and start the experiment in the LaunchDarkly UI. The remediation trigger is also easier to create with the REST setup script because the REST API can return the generated `triggerURL` directly.
+The example manages the flags and environment targeting rules. Create the experiment metric with the LaunchDarkly UI or REST setup script, then create and start the experiment in the LaunchDarkly UI. The remediation trigger is also easier to create with the REST setup script because the REST API can return the generated `triggerURL` directly.
 
 ## Why This Repo Uses REST First
 
