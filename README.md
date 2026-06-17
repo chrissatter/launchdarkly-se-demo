@@ -147,7 +147,7 @@ The REST script uses LaunchDarkly's API to create or reuse these default resourc
 
 - Create or reuse `new-landing-page-hero`
 - Enable client-side SDK availability
-- Turn targeting on for the selected environment
+- Leave targeting off so the demo starts in the control experience
 - Set the off/default behavior to `false`
 - Add the individual target `alice-beta-001 -> true`
 - Add the rule `user.plan is one of enterprise -> true`
@@ -156,7 +156,7 @@ The REST script uses LaunchDarkly's API to create or reuse these default resourc
 - Create the AI config flag `support-chatbot-ai-config`
 - Create a generic remediation trigger that turns the flag off
 
-The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
+The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The release demo begins when you turn the prepared flag on in LaunchDarkly. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
 
 If setup finds an archived demo flag with the same key, it restores the flag and continues.
 

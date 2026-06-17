@@ -346,8 +346,8 @@ async function configureTargeting(flag) {
   const envConfig = envConfigFor(flag);
   const instructions = [];
 
-  if (envConfig.on !== true) {
-    instructions.push({ kind: "turnFlagOn" });
+  if (envConfig.on !== false) {
+    instructions.push({ kind: "turnFlagOff" });
   }
 
   instructions.push(
@@ -506,6 +506,7 @@ function printSummary({ environment, trigger }) {
   console.log(`Experiment rule serving false until experiment runs: user.experimentCohort is one of ${EXPERIMENT_COHORT}`);
   console.log(`Experiment metric: ${METRIC_KEY} listens for ${METRIC_EVENT_KEY}`);
   console.log(`AI config flag: ${AI_CONFIG_KEY}`);
+  console.log("Flag starts off for ship-dark release demo.");
   console.log("Default and off variation: false");
 }
 
