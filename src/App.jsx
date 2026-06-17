@@ -99,6 +99,12 @@ function App({ launchDarklyReady }) {
   const aiConfig = useMemo(() => normalizeAiConfig(rawAiConfig), [rawAiConfig]);
 
   useEffect(() => {
+    if (!heroEnabled) {
+      setIncidentState("healthy");
+    }
+  }, [heroEnabled]);
+
+  useEffect(() => {
     if (!ldClient) return undefined;
 
     const handleChange = (value, previous) => {
@@ -264,7 +270,7 @@ function App({ launchDarklyReady }) {
                 {heroEnabled ? "Book a launch review" : "Start free trial"}
                 <ArrowRight size={18} />
               </button>
-              <button className="secondary-button" type="button" onClick={() => setIncidentState("firing")}>
+              <button className="secondary-button" type="button" onClick={() => setIncidentState("firing")} disabled={!heroEnabled}>
                 <AlertTriangle size={18} />
                 Simulate incident
               </button>

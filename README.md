@@ -188,7 +188,7 @@ To demonstrate release and rollback:
 The flag's default rule intentionally serves `false`, so use one eligible demo context to make the release visible without broadly releasing the feature. Part 2 explains how those eligible contexts are targeted.
 
 1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
-2. Start with the flag off. The local app should show the control hero and `Raw value: false`.
+2. The flag should start in the off state. The local app should show the control hero and `Raw value: false` for every context.
 3. In LaunchDarkly, turn the flag on, then click **Review and save** to apply the pending change. The existing individual target or enterprise rule should serve `true` for the selected context.
 4. The app should switch to the new hero and show `Raw value: true`.
 5. Turn the flag off again. Keep the off variation set to `false`.
@@ -212,6 +212,8 @@ Keep the local app open while changing the flag in LaunchDarkly. The hero should
 
 The remediation path uses a LaunchDarkly flag trigger that turns targeting off. I tested this by invoking the generated trigger URL with `curl`; after the request, LaunchDarkly showed the flag as off and the app rolled back to the control experience.
 
+The **Simulate incident** button is a local demo aid. It adds a warning tint and changes the incident status to show that the released experience is unhealthy. The actual remediation action is the LaunchDarkly trigger below. When the trigger turns the flag off, the app receives the flag change, returns to the control hero, and clears the local incident indicator.
+
 Leave `npm run dev` running in the first terminal. Open a second terminal, move into the cloned repo, and load the local `.env` file before invoking the trigger:
 
 ```bash
@@ -231,6 +233,8 @@ curl -X POST "$LD_REMEDIATION_TRIGGER_URL" \
   -H "Content-Type: application/json" \
   -d '{"eventName":"Demo incident: hero conversion errors","url":"http://localhost:5173"}'
 ```
+
+The JSON body is optional context for the trigger call; the important action is that the trigger turns the LaunchDarkly flag off.
 
 This satisfies the remediation requirement: a problematic feature can be turned off manually via `curl` with minimal customer impact.
 

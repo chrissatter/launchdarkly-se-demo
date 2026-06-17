@@ -176,6 +176,11 @@ h2 {
   background: rgba(255, 255, 255, 0.16);
 }
 
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .demo-console,
 .controls-column,
 .details-column,
