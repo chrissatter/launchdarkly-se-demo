@@ -223,7 +223,7 @@ function App({ launchDarklyReady }) {
 
   return (
     <main>
-      <section className={`hero ${heroEnabled ? "hero-new" : "hero-control"}`}>
+      <section className={`hero ${heroEnabled ? "hero-new" : "hero-control"} ${incidentState === "firing" ? "hero-incident" : ""}`}>
         <nav className="topbar" aria-label="Primary">
           <div className="brand-mark">ABC</div>
           <div className="nav-actions">
