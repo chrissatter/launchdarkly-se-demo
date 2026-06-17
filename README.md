@@ -203,11 +203,17 @@ Keep the local app open while changing the flag in LaunchDarkly. The hero should
 
 The remediation path uses a LaunchDarkly flag trigger that turns targeting off. I tested this by invoking the generated trigger URL with `curl`; after the request, LaunchDarkly showed the flag as off and the app rolled back to the control experience.
 
-Use the trigger URL from your local `.env`:
+Leave `npm run dev` running in the first terminal. Open a second terminal, move into the cloned repo, and load the local `.env` file before invoking the trigger:
 
 ```bash
+cd launchdarkly-se-demo
+set -a
+source .env
+set +a
 curl -X POST "$LD_REMEDIATION_TRIGGER_URL"
 ```
+
+If `curl` reports a blank argument, the current shell has not loaded `LD_REMEDIATION_TRIGGER_URL`. Run `echo "$LD_REMEDIATION_TRIGGER_URL"` to confirm the value is present before retrying.
 
 The same command can include optional incident context:
 
