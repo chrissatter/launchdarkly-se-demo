@@ -379,10 +379,12 @@ Name: Support chatbot AI config experiment
 Hypothesis: The empathetic escalation guide improves helpful feedback without increasing escalations.
 Config or flag: support-chatbot-ai-config
 Primary metric: chatbot-helpful-clicked
-Guardrail metric: chatbot-escalation-clicked
-Audience: user.plan is one of pro, enterprise
+Secondary metric: chatbot-escalation-clicked
+Targeting rule: Default Rule
 Split: 50% concise, 50% empathetic
 ```
+
+In the LaunchDarkly experiment design UI, add `chatbot-helpful-clicked` as the primary metric and `chatbot-escalation-clicked` as a second metric. Treat escalation clicks as the metric you do not want to increase. If the UI shows **Targeting rule: Default Rule**, the experiment includes all user contexts that evaluate that flag/config. To restrict the AI experiment to a narrower audience, first add a targeting rule on `support-chatbot-ai-config`, then select that rule in the experiment.
 
 For a reviewer demo, ask the chatbot a support question, switch the config variation in LaunchDarkly, and ask again. The visible model, prompt, and generated response style should change immediately.
 
