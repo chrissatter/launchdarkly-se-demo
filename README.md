@@ -298,24 +298,31 @@ Use that cohort for the experiment audience so it does not interfere with the Pa
 
 ### Experiment
 
-Create an experiment using the existing flag and metric:
+Create an experiment using the existing flag and metric. If you used `LD_DEMO_KEY_PREFIX`, use the prefixed values shown in your tenant and `.env`.
 
 ```text
 Name: Landing page hero CTA experiment
 Hypothesis: The new landing page hero increases CTA conversion.
 Metric source: LaunchDarkly
 Primary metric: Landing page CTA clicked
-Flag: new-landing-page-hero
-Targeting rule: Experiment cohort
+Flag: new-landing-page-hero, or the prefixed flag such as satter-new-landing-page-hero
+Targeting rule: the rule where user.experimentCohort is one of landing-page-q3, or the prefixed cohort such as satter-landing-page-q3
 Randomize by: user
 Traffic split: 50% false, 50% true
 Variation served outside experiment: false
 Control: false
 ```
 
-If you used `LD_DEMO_KEY_PREFIX`, select the prefixed flag, such as `satter-new-landing-page-hero`. If the targeting rule dropdown shows generic labels like **Rule 1** and **Rule 2**, choose the rule whose condition is `user.experimentCohort is one of <prefix>-landing-page-q3`. In the REST-created setup, this is usually **Rule 2**.
+In the LaunchDarkly experiment design UI:
 
-Turn the flag on, then start an experiment iteration.
+1. Select the demo flag in **Flag or config**. With a prefix, this will look like `satter-new-landing-page-hero`.
+2. Select the experiment cohort rule in **Targeting rule**. If the dropdown shows generic labels like **Rule 1** and **Rule 2**, choose the rule whose condition is `user.experimentCohort is one of <prefix>-landing-page-q3`. In the REST-created setup, this is usually **Rule 2**.
+3. Set **Variation served to users outside this experiment** to `false`.
+4. Set the experiment split to `true` 50% and `false` 50%.
+5. Set **Control** to `false`.
+6. Save the experiment design.
+7. Turn the flag on in LaunchDarkly and click **Review and save**.
+8. Start the experiment iteration.
 
 ### Measure
 
