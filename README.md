@@ -133,7 +133,7 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
 
    It does not write `LD_API_TOKEN` to `.env`; keep the token shell-only and out of Git.
 
-6. Run the app:
+6. After setup completes and `.env` has been updated, run the app:
 
    ```bash
    npm run dev
