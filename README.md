@@ -176,6 +176,13 @@ The flag `new-landing-page-hero` controls the landing page hero.
 - `false`: control experience, "Reliable operations for modern SaaS teams"
 - `true`: new experience, "Launch the new customer experience without waiting for deploys"
 
+What to look for in the local app:
+
+| Flag value | Matching context examples | Expected page state |
+| --- | --- | --- |
+| `false` | Anonymous prospect, flag off, or unmatched contexts | Control background, headline "Reliable operations for modern SaaS teams", `Variation: control`, `Raw value: false` |
+| `true` | Individually targeted beta user or enterprise rule match while the flag is on | New background, headline "Launch the new customer experience without waiting for deploys", `Variation: new experience`, `Raw value: true` |
+
 To demonstrate release and rollback:
 
 1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
@@ -247,8 +254,8 @@ The automated setup already creates these targeting examples. If you are configu
 Expected local behavior:
 
 - **Anonymous prospect**: receives `false` and sees the control hero.
-- **Individually targeted beta user**: receives `true` and sees the new hero.
-- **Enterprise rule match**: receives `true` through the `plan = enterprise` rule and sees the new hero.
+- **Individually targeted beta user**: receives `true` when the flag is on and sees the new background plus "Launch the new customer experience without waiting for deploys".
+- **Enterprise rule match**: receives `true` through the `plan = enterprise` rule when the flag is on and sees the new background plus "Launch the new customer experience without waiting for deploys".
 
 ## Extra Credit: Experimentation
 
@@ -584,16 +591,17 @@ Terraform only destroys resources tracked in its state. If you also ran `npm run
 
 ## Demo Script
 
-1. Start with the flag off and show the control landing page.
-2. Toggle the flag on in LaunchDarkly. The hero should switch to the new experience without a page reload.
-3. Use the context switcher:
+1. Start with the flag off and show the control landing page: the hero says "Reliable operations for modern SaaS teams" and the Release control panel shows `Raw value: false`.
+2. Select **Individually targeted beta user** or **Enterprise rule match** in the context switcher.
+3. Toggle the flag on in LaunchDarkly and click **Review and save**. The hero should switch without a page reload to the new background and "Launch the new customer experience without waiting for deploys"; the Release control panel should show `Raw value: true`.
+4. Use the context switcher:
    - Target `alice-beta-001` directly for individual targeting.
    - Add a rule where `plan` is `enterprise` or `companySize` is greater than `1000` for rule-based targeting.
-4. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
-5. Start the experiment and click **Generate sample traffic** to send sample exposure and conversion events.
-6. Change `support-chatbot-ai-config` and show the chatbot model, prompt, and response style updating.
-7. Show the Terraform example as the integration path for repeatable LaunchDarkly setup.
-8. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back.
+5. Click the CTA and confirm the app calls `track("hero-cta-clicked")` for experimentation.
+6. Start the experiment and click **Generate sample traffic** to send sample exposure and conversion events.
+7. Change `support-chatbot-ai-config` and show the chatbot model, prompt, and response style updating.
+8. Show the Terraform example as the integration path for repeatable LaunchDarkly setup.
+9. Invoke the remediation trigger with `curl -X POST "$LD_REMEDIATION_TRIGGER_URL"` and show the app rolling back to the control headline and `Raw value: false`.
 
 ## Notes for Reviewers
 
