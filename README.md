@@ -159,9 +159,10 @@ The REST script uses LaunchDarkly's API to create or reuse these default resourc
 - Add the experiment cohort rule `user.experimentCohort is one of landing-page-q3 -> false`
 - Create the metric `landing-page-cta-clicked` for the custom event `hero-cta-clicked`
 - Create the AI config flag `support-chatbot-ai-config`
+- Create chatbot metrics for `chatbot-message-sent`, `chatbot-helpful-clicked`, and `chatbot-escalation-clicked`
 - Create a generic remediation trigger that turns the flag off
 
-The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The release demo begins when you turn the prepared flag on in LaunchDarkly. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
+The script prepares the flag, targeting rules, metrics, remediation trigger, and chatbot configuration flag. The release demo begins when you turn the prepared flag on in LaunchDarkly. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
 
 If setup finds an archived demo flag with the same key, it restores the flag and continues.
 
@@ -361,13 +362,15 @@ When the config changes in LaunchDarkly, the chatbot panel updates without a cod
 
 ### Optional AI Experiment
 
-To test prompt and model variants, create metrics from these app events:
+To test prompt and model variants, use metrics based on these app events:
 
 ```text
 chatbot-message-sent
 chatbot-helpful-clicked
 chatbot-escalation-clicked
 ```
+
+The REST setup script creates these metrics automatically. If you configure LaunchDarkly manually, create LaunchDarkly-hosted custom metrics for each event before creating the AI config experiment.
 
 Suggested experiment:
 
@@ -477,7 +480,29 @@ Use this path if you do not want to run the REST setup script.
    Randomization unit: user
    ```
 
-7. Create the chatbot config. If your tenant has AgentControl / AI Configs, create an AI Config with prompt/model variations. If it does not, create a JSON flag:
+7. Create optional chatbot experiment metrics:
+
+   ```text
+   Name: Chatbot message sent
+   Metric key: chatbot-message-sent
+   Event kind: Custom
+   Event key: chatbot-message-sent
+   Metric definition: Count distinct units (Percent)
+
+   Name: Chatbot helpful clicked
+   Metric key: chatbot-helpful-clicked
+   Event kind: Custom
+   Event key: chatbot-helpful-clicked
+   Metric definition: Count distinct units (Percent)
+
+   Name: Chatbot escalation clicked
+   Metric key: chatbot-escalation-clicked
+   Event kind: Custom
+   Event key: chatbot-escalation-clicked
+   Metric definition: Count distinct units (Percent)
+   ```
+
+8. Create the chatbot config. If your tenant has AgentControl / AI Configs, create an AI Config with prompt/model variations. If it does not, create a JSON flag:
 
    ```text
    Name: Support chatbot AI config

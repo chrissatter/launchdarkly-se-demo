@@ -7,6 +7,11 @@ const DEMO_KEY_PREFIX = normalizePrefix(process.env.LD_DEMO_KEY_PREFIX);
 const FLAG_KEY = process.env.LD_FLAG_KEY || demoKey("new-landing-page-hero");
 const AI_CONFIG_KEY = process.env.LD_AI_CONFIG_KEY || demoKey("support-chatbot-ai-config");
 const METRIC_KEY = process.env.LD_METRIC_KEY || demoKey("landing-page-cta-clicked");
+const CHATBOT_METRIC_KEYS = [
+  process.env.LD_CHATBOT_MESSAGE_METRIC_KEY || demoKey("chatbot-message-sent"),
+  process.env.LD_CHATBOT_HELPFUL_METRIC_KEY || demoKey("chatbot-helpful-clicked"),
+  process.env.LD_CHATBOT_ESCALATION_METRIC_KEY || demoKey("chatbot-escalation-clicked"),
+];
 const TOKEN = process.env.LD_API_TOKEN;
 const CONFIRM_VALUE = "delete-demo-resources";
 const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
@@ -27,6 +32,11 @@ const resources = [
     key: METRIC_KEY,
     path: `/metrics/${PROJECT_KEY}/${METRIC_KEY}`,
   },
+  ...CHATBOT_METRIC_KEYS.map((key) => ({
+    type: "metric",
+    key,
+    path: `/metrics/${PROJECT_KEY}/${key}`,
+  })),
 ];
 
 function normalizePrefix(value) {
@@ -114,7 +124,7 @@ async function listExperiments(filter) {
 
 async function findRelatedExperiments() {
   const byKey = new Map();
-  const filters = [`flagKey:${FLAG_KEY}`, `metricKey:${METRIC_KEY}`];
+  const filters = [`flagKey:${FLAG_KEY}`, ...[METRIC_KEY, ...CHATBOT_METRIC_KEYS].map((key) => `metricKey:${key}`)];
 
   for (const filter of filters) {
     for (const experiment of await listExperiments(filter)) {

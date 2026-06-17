@@ -18,6 +18,26 @@ const ENTERPRISE_RULE_VALUE = "enterprise";
 const EXPERIMENT_COHORT = process.env.LD_EXPERIMENT_COHORT || demoKey("landing-page-q3");
 const METRIC_KEY = process.env.LD_METRIC_KEY || demoKey("landing-page-cta-clicked");
 const METRIC_EVENT_KEY = process.env.LD_METRIC_EVENT_KEY || demoKey("hero-cta-clicked");
+const CHATBOT_METRICS = [
+  {
+    key: process.env.LD_CHATBOT_MESSAGE_METRIC_KEY || demoKey("chatbot-message-sent"),
+    eventKey: "chatbot-message-sent",
+    name: "Chatbot message sent",
+    description: "Binary engagement metric for chatbot messages sent in the LaunchDarkly SE demo.",
+  },
+  {
+    key: process.env.LD_CHATBOT_HELPFUL_METRIC_KEY || demoKey("chatbot-helpful-clicked"),
+    eventKey: "chatbot-helpful-clicked",
+    name: "Chatbot helpful clicked",
+    description: "Binary success metric for helpful chatbot responses in the LaunchDarkly SE demo.",
+  },
+  {
+    key: process.env.LD_CHATBOT_ESCALATION_METRIC_KEY || demoKey("chatbot-escalation-clicked"),
+    eventKey: "chatbot-escalation-clicked",
+    name: "Chatbot escalation clicked",
+    description: "Binary guardrail metric for chatbot escalation clicks in the LaunchDarkly SE demo.",
+  },
+];
 const AI_CONFIG_VARIATIONS = [
   {
     value: {
@@ -171,8 +191,8 @@ async function getAiConfigFlag() {
   return optionalLdRequest(`/flags/${PROJECT_KEY}/${AI_CONFIG_KEY}?filterEnv=${ENV_KEY}`);
 }
 
-async function getMetric() {
-  return optionalLdRequest(`/metrics/${PROJECT_KEY}/${METRIC_KEY}`);
+async function getMetricByKey(key) {
+  return optionalLdRequest(`/metrics/${PROJECT_KEY}/${key}`);
 }
 
 async function createFlag() {
@@ -406,23 +426,23 @@ async function configureTargeting(flag) {
   return getFlag();
 }
 
-async function ensureMetric() {
-  const existing = await getMetric();
+async function ensureMetric({ key, name, description, eventKey }) {
+  const existing = await getMetricByKey(key);
 
   if (existing) {
-    console.log(`Using existing metric ${METRIC_KEY}.`);
+    console.log(`Using existing metric ${key}.`);
     return existing;
   }
 
-  console.log(`Creating metric ${METRIC_KEY}...`);
+  console.log(`Creating metric ${key}...`);
   return ldRequest(`/metrics/${PROJECT_KEY}`, {
     method: "POST",
     body: JSON.stringify({
-      key: METRIC_KEY,
-      name: "Landing page CTA clicked",
-      description: "Binary conversion metric for the LaunchDarkly SE demo landing page CTA.",
+      key,
+      name,
+      description,
       kind: "custom",
-      eventKey: METRIC_EVENT_KEY,
+      eventKey,
       isNumeric: false,
       successCriteria: "HigherThanBaseline",
       analysisUnits: ["user"],
@@ -505,6 +525,9 @@ function printSummary({ environment, trigger }) {
   console.log(`Rule serving true: user.plan is one of ${ENTERPRISE_RULE_VALUE}`);
   console.log(`Experiment rule serving false until experiment runs: user.experimentCohort is one of ${EXPERIMENT_COHORT}`);
   console.log(`Experiment metric: ${METRIC_KEY} listens for ${METRIC_EVENT_KEY}`);
+  for (const metric of CHATBOT_METRICS) {
+    console.log(`AI config metric: ${metric.key} listens for ${metric.eventKey}`);
+  }
   console.log(`AI config flag: ${AI_CONFIG_KEY}`);
   console.log("Flag starts off for ship-dark release demo.");
   console.log("Default and off variation: false");
@@ -515,7 +538,15 @@ try {
   let flag = await ensureFlag();
   flag = await ensureClientSideAvailability(flag);
   flag = await configureTargeting(flag);
-  await ensureMetric();
+  await ensureMetric({
+    key: METRIC_KEY,
+    name: "Landing page CTA clicked",
+    description: "Binary conversion metric for the LaunchDarkly SE demo landing page CTA.",
+    eventKey: METRIC_EVENT_KEY,
+  });
+  for (const metric of CHATBOT_METRICS) {
+    await ensureMetric(metric);
+  }
   await ensureAiConfigFlag();
 
   let trigger = null;
