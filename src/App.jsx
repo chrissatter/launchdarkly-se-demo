@@ -90,6 +90,7 @@ function App({ launchDarklyReady }) {
   const [experimentRun, setExperimentRun] = useState(null);
   const [chatQuestion, setChatQuestion] = useState("How do I roll back a risky release?");
   const [chatHistory, setChatHistory] = useState([]);
+  const [chatFeedback, setChatFeedback] = useState({ helpful: 0, escalations: 0 });
 
   const rawHeroFlag = flags[HERO_FLAG_KEY];
   const rawAiConfig = flags[AI_CONFIG_KEY];
@@ -151,6 +152,7 @@ function App({ launchDarklyReady }) {
       answer,
       configName: aiConfig.name,
       model: aiConfig.model,
+      feedback: null,
       at: new Date().toLocaleTimeString()
     };
 
@@ -165,10 +167,22 @@ function App({ launchDarklyReady }) {
   }
 
   function handleHelpfulClick(message, helpful) {
+    if (message.feedback) return;
+
+    const feedback = helpful ? "helpful" : "escalated";
+    setChatHistory((current) =>
+      current.map((item) => (item.id === message.id ? { ...item, feedback } : item))
+    );
+    setChatFeedback((current) => ({
+      helpful: current.helpful + (helpful ? 1 : 0),
+      escalations: current.escalations + (helpful ? 0 : 1)
+    }));
+
     ldClient?.track(helpful ? "chatbot-helpful-clicked" : "chatbot-escalation-clicked", {
       configKey: AI_CONFIG_KEY,
       configName: message.configName,
       model: message.model,
+      feedback,
       source: "ai-config-demo"
     });
   }
@@ -428,6 +442,14 @@ function App({ launchDarklyReady }) {
                   <dt>Temp</dt>
                   <dd>{aiConfig.temperature}</dd>
                 </div>
+                <div>
+                  <dt>Helpful</dt>
+                  <dd>{chatFeedback.helpful}</dd>
+                </div>
+                <div>
+                  <dt>Escalations</dt>
+                  <dd>{chatFeedback.escalations}</dd>
+                </div>
               </dl>
               <p className="prompt-preview">{aiConfig.systemPrompt}</p>
               <form className="chat-form" onSubmit={handleAskAssistant}>
@@ -448,10 +470,23 @@ function App({ launchDarklyReady }) {
                       <p>{message.answer}</p>
                       <div className="chat-actions">
                         <small>{message.model} at {message.at}</small>
-                        <button type="button" onClick={() => handleHelpfulClick(message, true)}>
+                        {message.feedback ? (
+                          <strong className="feedback-status">
+                            {message.feedback === "helpful" ? "Helpful recorded" : "Escalation recorded"}
+                          </strong>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => handleHelpfulClick(message, true)}
+                          disabled={Boolean(message.feedback)}
+                        >
                           Helpful
                         </button>
-                        <button type="button" onClick={() => handleHelpfulClick(message, false)}>
+                        <button
+                          type="button"
+                          onClick={() => handleHelpfulClick(message, false)}
+                          disabled={Boolean(message.feedback)}
+                        >
                           Escalate
                         </button>
                       </div>

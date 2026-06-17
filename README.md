@@ -410,7 +410,7 @@ In the LaunchDarkly experiment design UI, add `chatbot-helpful-clicked` as the p
 
 Before starting the AI experiment iteration, make sure `support-chatbot-ai-config` is on and saved. LaunchDarkly will not start the experiment while the selected flag/config is off.
 
-After the AI experiment starts, do not edit the Default rule. LaunchDarkly will lock the rule and assign users to `concise` or `empathetic` based on the experiment split. For a reviewer demo, ask chatbot questions, click the helpful or escalation feedback controls, then review the experiment results after LaunchDarkly processes the events.
+After the AI experiment starts, do not edit the Default rule. LaunchDarkly will lock the rule and assign users to `concise` or `empathetic` based on the experiment split. For a reviewer demo, ask chatbot questions, click the helpful or escalation feedback controls, and watch the local **Helpful** or **Escalations** counters update in the AI Config panel. Those buttons also send `chatbot-helpful-clicked` and `chatbot-escalation-clicked` events to LaunchDarkly; review the experiment results after LaunchDarkly processes the events.
 
 ## Extra Credit: Integrations
 

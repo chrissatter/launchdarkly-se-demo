@@ -416,12 +416,22 @@ dd {
   color: #657169;
 }
 
+.feedback-status {
+  color: #2f7f62;
+  font-size: 0.82rem;
+}
+
 .chat-actions button {
   border: 1px solid #d8dfd2;
   background: #f8faf6;
   color: #17211b;
   padding: 4px 8px;
   cursor: pointer;
+}
+
+.chat-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .context-card span {
