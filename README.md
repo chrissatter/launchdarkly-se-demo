@@ -313,6 +313,8 @@ Variation served outside experiment: false
 Control: false
 ```
 
+If you used `LD_DEMO_KEY_PREFIX`, select the prefixed flag, such as `satter-new-landing-page-hero`. If the targeting rule dropdown shows generic labels like **Rule 1** and **Rule 2**, choose the rule whose condition is `user.experimentCohort is one of <prefix>-landing-page-q3`. In the REST-created setup, this is usually **Rule 2**.
+
 Turn the flag on, then start an experiment iteration.
 
 ### Measure
