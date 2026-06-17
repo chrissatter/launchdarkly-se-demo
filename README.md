@@ -175,10 +175,12 @@ To demonstrate release and rollback:
 
 1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
 2. Start with the flag off. The local app should show the control hero and `Raw value: false`.
-3. Turn the flag on in LaunchDarkly and serve `true` to the current context.
-4. The app should switch to the new hero.
-5. Turn the flag off again.
-6. The app should roll back to the control hero.
+3. In LaunchDarkly, turn the flag on. The existing individual target or enterprise rule should serve `true` for the selected context.
+4. The app should switch to the new hero and show `Raw value: true`.
+5. Turn the flag off again. Keep the off variation set to `false`.
+6. The app should roll back to the control hero and show `Raw value: false`.
+
+To demonstrate a broad release instead of a targeted release, edit the **Default rule** to serve `true`, then review and save the change. That makes unmatched contexts receive the new experience while the flag is on.
 
 ### Instant Releases and Rollbacks
 
