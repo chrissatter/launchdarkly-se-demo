@@ -5,18 +5,19 @@ import { resolve } from "node:path";
 
 const API_BASE = "https://app.launchdarkly.com/api/v2";
 const ENV_FILE = resolve(process.cwd(), ".env");
-const FLAG_KEY = process.env.LD_FLAG_KEY || "new-landing-page-hero";
 const PROJECT_KEY = process.env.LD_PROJECT_KEY || "default";
 const ENV_KEY = process.env.LD_ENV_KEY || "test";
 const TOKEN = process.env.LD_API_TOKEN;
 const CREATE_TRIGGER = process.env.LD_CREATE_TRIGGER === "true";
+const DEMO_KEY_PREFIX = normalizePrefix(process.env.LD_DEMO_KEY_PREFIX);
 
-const AI_CONFIG_KEY = "support-chatbot-ai-config";
+const FLAG_KEY = process.env.LD_FLAG_KEY || demoKey("new-landing-page-hero");
+const AI_CONFIG_KEY = process.env.LD_AI_CONFIG_KEY || demoKey("support-chatbot-ai-config");
 const DEMO_TARGET_KEY = "alice-beta-001";
 const ENTERPRISE_RULE_VALUE = "enterprise";
-const EXPERIMENT_COHORT = "landing-page-q3";
-const METRIC_KEY = "landing-page-cta-clicked";
-const METRIC_EVENT_KEY = "hero-cta-clicked";
+const EXPERIMENT_COHORT = process.env.LD_EXPERIMENT_COHORT || demoKey("landing-page-q3");
+const METRIC_KEY = process.env.LD_METRIC_KEY || demoKey("landing-page-cta-clicked");
+const METRIC_EVENT_KEY = process.env.LD_METRIC_EVENT_KEY || demoKey("hero-cta-clicked");
 const AI_CONFIG_VARIATIONS = [
   {
     value: {
@@ -47,6 +48,14 @@ const AI_CONFIG_VARIATIONS = [
     description: "Higher-touch support configuration",
   },
 ];
+
+function normalizePrefix(value) {
+  return (value || "").trim().replace(/^-+|-+$/g, "");
+}
+
+function demoKey(defaultKey) {
+  return DEMO_KEY_PREFIX ? `${DEMO_KEY_PREFIX}-${defaultKey}` : defaultKey;
+}
 
 if (!TOKEN) {
   console.error("Missing LD_API_TOKEN. Create a LaunchDarkly API token and export it before running this script.");
@@ -450,6 +459,10 @@ function upsertEnvValue(content, key, value) {
 function writeLocalEnv({ environment, trigger }) {
   const updates = {
     VITE_LD_CLIENT_ID: environment._id,
+    VITE_LD_HERO_FLAG_KEY: FLAG_KEY,
+    VITE_LD_AI_CONFIG_KEY: AI_CONFIG_KEY,
+    VITE_LD_EXPERIMENT_EVENT_KEY: METRIC_EVENT_KEY,
+    VITE_LD_EXPERIMENT_COHORT: EXPERIMENT_COHORT,
   };
 
   if (trigger?.triggerURL) {

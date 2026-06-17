@@ -3,8 +3,10 @@
 const API_BASE = "https://app.launchdarkly.com/api/v2";
 const PROJECT_KEY = process.env.LD_PROJECT_KEY || "default";
 const ENV_KEY = process.env.LD_ENV_KEY || "test";
-const FLAG_KEY = process.env.LD_FLAG_KEY || "new-landing-page-hero";
-const METRIC_KEY = "landing-page-cta-clicked";
+const DEMO_KEY_PREFIX = normalizePrefix(process.env.LD_DEMO_KEY_PREFIX);
+const FLAG_KEY = process.env.LD_FLAG_KEY || demoKey("new-landing-page-hero");
+const AI_CONFIG_KEY = process.env.LD_AI_CONFIG_KEY || demoKey("support-chatbot-ai-config");
+const METRIC_KEY = process.env.LD_METRIC_KEY || demoKey("landing-page-cta-clicked");
 const TOKEN = process.env.LD_API_TOKEN;
 const CONFIRM_VALUE = "delete-demo-resources";
 const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
@@ -12,8 +14,8 @@ const CONFIRMED = process.env.LD_CLEANUP_CONFIRM === CONFIRM_VALUE;
 const resources = [
   {
     type: "flag",
-    key: "support-chatbot-ai-config",
-    path: `/flags/${PROJECT_KEY}/support-chatbot-ai-config`,
+    key: AI_CONFIG_KEY,
+    path: `/flags/${PROJECT_KEY}/${AI_CONFIG_KEY}`,
   },
   {
     type: "flag",
@@ -26,6 +28,14 @@ const resources = [
     path: `/metrics/${PROJECT_KEY}/${METRIC_KEY}`,
   },
 ];
+
+function normalizePrefix(value) {
+  return (value || "").trim().replace(/^-+|-+$/g, "");
+}
+
+function demoKey(defaultKey) {
+  return DEMO_KEY_PREFIX ? `${DEMO_KEY_PREFIX}-${defaultKey}` : defaultKey;
+}
 
 if (!TOKEN) {
   console.error("Missing LD_API_TOKEN. Export a LaunchDarkly API token before running cleanup.");

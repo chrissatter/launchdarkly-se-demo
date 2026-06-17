@@ -17,10 +17,10 @@ import {
 
 // Recreate these LaunchDarkly resources in the reviewer's tenant, or run
 // `npm run ld:setup` to create them automatically through the REST API.
-const HERO_FLAG_KEY = "new-landing-page-hero";
-const AI_CONFIG_KEY = "support-chatbot-ai-config";
-const EXPERIMENT_EVENT_KEY = "hero-cta-clicked";
-const EXPERIMENT_COHORT = "landing-page-q3";
+const HERO_FLAG_KEY = import.meta.env.VITE_LD_HERO_FLAG_KEY || "new-landing-page-hero";
+const AI_CONFIG_KEY = import.meta.env.VITE_LD_AI_CONFIG_KEY || "support-chatbot-ai-config";
+const EXPERIMENT_EVENT_KEY = import.meta.env.VITE_LD_EXPERIMENT_EVENT_KEY || "hero-cta-clicked";
+const EXPERIMENT_COHORT = import.meta.env.VITE_LD_EXPERIMENT_COHORT || "landing-page-q3";
 const SIMULATED_VISITOR_COUNT = 24;
 
 const defaultAiConfig = {

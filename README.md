@@ -112,10 +112,22 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
    npm run ld:setup
    ```
 
+   If you are running in a shared reviewer tenant and want to avoid key collisions, add a prefix before running setup:
+
+   ```bash
+   export LD_DEMO_KEY_PREFIX="satter"
+   ```
+
+   With that prefix, the setup script creates resources such as `satter-new-landing-page-hero` and writes matching frontend keys into `.env`.
+
    The script updates `.env` in the current directory with:
 
    ```bash
    VITE_LD_CLIENT_ID=...
+   VITE_LD_HERO_FLAG_KEY=...
+   VITE_LD_AI_CONFIG_KEY=...
+   VITE_LD_EXPERIMENT_EVENT_KEY=...
+   VITE_LD_EXPERIMENT_COHORT=...
    LD_REMEDIATION_TRIGGER_URL=...
    ```
 
@@ -131,7 +143,7 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
 
 ### What the Setup Creates
 
-The REST script uses LaunchDarkly's API to:
+The REST script uses LaunchDarkly's API to create or reuse these default resources. If `LD_DEMO_KEY_PREFIX` is set, the script prefixes the flag, config, metric, event, and cohort keys.
 
 - Create or reuse `new-landing-page-hero`
 - Enable client-side SDK availability
@@ -471,7 +483,13 @@ export LD_ENV_KEY="test"
 npm run ld:cleanup
 ```
 
-The dry run lists demo resources and any active experiments that reference `new-landing-page-hero` or `landing-page-cta-clicked`. If the dry run looks right, rerun with confirmation:
+If setup used `LD_DEMO_KEY_PREFIX`, export the same prefix before cleanup:
+
+```bash
+export LD_DEMO_KEY_PREFIX="satter"
+```
+
+The dry run lists demo resources and any active experiments that reference the demo flag or metric. If the dry run looks right, rerun with confirmation:
 
 ```bash
 export LD_CLEANUP_CONFIRM=delete-demo-resources
