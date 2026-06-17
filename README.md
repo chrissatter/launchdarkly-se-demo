@@ -212,7 +212,7 @@ Keep the local app open while changing the flag in LaunchDarkly. The hero should
 
 The remediation path uses a LaunchDarkly flag trigger that turns targeting off. I tested this by invoking the generated trigger URL with `curl`; after the request, LaunchDarkly showed the flag as off and the app rolled back to the control experience.
 
-The **Simulate incident** button is a local demo aid. It adds a warning tint and changes the incident status to show that the released experience is unhealthy. The actual remediation action is the LaunchDarkly trigger below. When the trigger turns the flag off, the app receives the flag change, returns to the control hero, and clears the local incident indicator.
+The **Simulate incident** button is a local demo aid. It adds a warning tint and changes the incident status to show that the released experience is unhealthy. The button is enabled only when the current context is receiving `Raw value: true`; for example, **Anonymous prospect** still receives `false` while the default rule serves `false`, even if the flag is on. The actual remediation action is the LaunchDarkly trigger below. When the trigger turns the flag off, the app receives the flag change, returns to the control hero, and clears the local incident indicator.
 
 Leave `npm run dev` running in the first terminal. Open a second terminal, move into the cloned repo, and load the local `.env` file before invoking the trigger:
 
