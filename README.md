@@ -185,6 +185,8 @@ What to look for in the local app:
 
 To demonstrate release and rollback:
 
+The flag's default rule intentionally serves `false`, so use one eligible demo context to make the release visible without broadly releasing the feature. Part 2 explains how those eligible contexts are targeted.
+
 1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
 2. Start with the flag off. The local app should show the control hero and `Raw value: false`.
 3. In LaunchDarkly, turn the flag on, then click **Review and save** to apply the pending change. The existing individual target or enterprise rule should serve `true` for the selected context.
@@ -256,6 +258,15 @@ Expected local behavior:
 - **Anonymous prospect**: receives `false` and sees the control hero.
 - **Individually targeted beta user**: receives `true` when the flag is on and sees the new background plus "Launch the new customer experience without waiting for deploys".
 - **Enterprise rule match**: receives `true` through the `plan = enterprise` rule when the flag is on and sees the new background plus "Launch the new customer experience without waiting for deploys".
+
+### Part 1 and Part 2 Coverage
+
+- **Part 1 feature flag**: `new-landing-page-hero` wraps the landing page hero component.
+- **Part 1 instant release/rollback**: the app listens for `change:new-landing-page-hero` and updates without a page reload.
+- **Part 1 remediation**: the generated LaunchDarkly trigger URL turns the flag off through `curl`.
+- **Part 2 context attributes**: the app sends `plan`, `companySize`, `region`, `betaAccess`, and `experimentCohort` through `ldClient.identify(...)`.
+- **Part 2 individual targeting**: `alice-beta-001` is targeted directly to receive `true`.
+- **Part 2 rule-based targeting**: users with `plan = enterprise` receive `true` through a targeting rule.
 
 ## Extra Credit: Experimentation
 
