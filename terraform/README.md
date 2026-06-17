@@ -66,17 +66,17 @@ terraform plan
 terraform apply
 ```
 
-If you are testing in a tenant that already has demo flags, use a prefix to avoid key collisions:
+If you are testing in a tenant that already has demo flags, use a prefix to avoid key collisions. Use a prefix that is different from any prefix you used with `npm run ld:setup`; for example, use `satter-tf` for Terraform if the REST setup used `satter`.
 
 ```bash
 terraform plan \
-  -var="demo_key_prefix=satter"
+  -var="demo_key_prefix=satter-tf"
 
 terraform apply \
-  -var="demo_key_prefix=satter"
+  -var="demo_key_prefix=satter-tf"
 ```
 
-With that prefix, Terraform creates resources such as `satter-new-landing-page-hero` and `satter-support-chatbot-ai-config`.
+With that prefix, Terraform creates resources such as `satter-tf-new-landing-page-hero` and `satter-tf-support-chatbot-ai-config`.
 
 If your LaunchDarkly project or environment keys are not `default` and `test`, override them:
 
@@ -92,7 +92,7 @@ You can combine custom project/environment keys with a prefix:
 terraform plan \
   -var="project_key=my-project" \
   -var="environment_key=test" \
-  -var="demo_key_prefix=satter"
+  -var="demo_key_prefix=satter-tf"
 ```
 
 After apply, copy the environment Client-side ID from LaunchDarkly into the app's `.env`:
@@ -130,7 +130,7 @@ If you used `demo_key_prefix` during `apply`, pass the same prefix to `destroy`:
 
 ```bash
 terraform destroy \
-  -var="demo_key_prefix=satter"
+  -var="demo_key_prefix=satter-tf"
 ```
 
 Terraform only removes resources it manages in state. If you also ran the REST setup script, return to the repo root and use:
@@ -175,9 +175,16 @@ For the integrations extra credit, show the Terraform files and optionally run `
 
 ## Troubleshooting
 
-If `terraform apply` fails with `An archived flag exists with this key` or `Duplicate flag key`, the target tenant already has a flag with the same key. Rerun `plan` or `apply` with a unique prefix:
+If `terraform apply` fails with `An archived flag exists with this key` or `Duplicate flag key`, the target tenant already has a flag with the same key. If Terraform partially created any resources before the failure, destroy those partial resources using the same prefix from the failed apply:
+
+```bash
+terraform destroy \
+  -var="demo_key_prefix=satter"
+```
+
+Then rerun `plan` or `apply` with a unique prefix that does not already exist in the tenant:
 
 ```bash
 terraform apply \
-  -var="demo_key_prefix=satter"
+  -var="demo_key_prefix=satter-tf"
 ```
