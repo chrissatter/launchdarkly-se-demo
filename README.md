@@ -370,6 +370,18 @@ The REST setup creates `support-chatbot-ai-config` with targeting off. Turn it o
 4. Click **Review and save**.
 5. Return to the local app. The **AI Config** panel should show the selected variant, model, temperature, and prompt values.
 
+### Manual AI Config Demo
+
+Use this path to show prompt/model control without running an experiment:
+
+1. Ask the chatbot a support question in the local app.
+2. In LaunchDarkly, open the `support-chatbot-ai-config` targeting page.
+3. Edit the **Default rule** and change the served variation from `concise` to `empathetic`, or from `empathetic` back to `concise`.
+4. Click **Review and save**.
+5. Return to the local app and ask the same question again. The **AI Config** panel should show the new variant, model, temperature, and prompt values, and the response style should change.
+
+Do this before starting an AI config experiment. Once an experiment is running on the Default rule, LaunchDarkly locks that rule and the experiment controls variation assignment.
+
 ### Optional AI Experiment
 
 To test prompt and model variants, use metrics based on these app events:
@@ -398,7 +410,7 @@ In the LaunchDarkly experiment design UI, add `chatbot-helpful-clicked` as the p
 
 Before starting the AI experiment iteration, make sure `support-chatbot-ai-config` is on and saved. LaunchDarkly will not start the experiment while the selected flag/config is off.
 
-For a reviewer demo, ask the chatbot a support question, switch the config variation in LaunchDarkly, and ask again. The visible model, prompt, and generated response style should change immediately.
+After the AI experiment starts, do not edit the Default rule. LaunchDarkly will lock the rule and assign users to `concise` or `empathetic` based on the experiment split. For a reviewer demo, ask chatbot questions, click the helpful or escalation feedback controls, then review the experiment results after LaunchDarkly processes the events.
 
 ## Extra Credit: Integrations
 
