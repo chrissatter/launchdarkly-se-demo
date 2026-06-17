@@ -595,15 +595,20 @@ export LD_CLEANUP_CONFIRM=delete-demo-resources
 npm run ld:cleanup
 ```
 
-The confirmed cleanup archives related experiments first, deletes the demo flags, and then attempts to delete the metric:
+If the dry run lists running experiments, stop those experiments in LaunchDarkly first. LaunchDarkly requires you to stop a running experiment and choose the variation to ship before the experiment can be archived. After stopping them, rerun the confirmed cleanup command.
+
+The confirmed cleanup archives related stopped experiments first, deletes the demo flags, and then attempts to delete the metrics:
 
 ```text
 support-chatbot-ai-config
 new-landing-page-hero
 landing-page-cta-clicked
+chatbot-message-sent
+chatbot-helpful-clicked
+chatbot-escalation-clicked
 ```
 
-LaunchDarkly may retain `landing-page-cta-clicked` if an archived experiment still references it. That is safe for reruns because setup will reuse the metric.
+LaunchDarkly may retain metrics if an archived experiment still references them. That is safe for reruns because setup will reuse the retained metrics.
 
 LaunchDarkly may also retain `new-landing-page-hero` if an archived experiment still references it. If that happens, cleanup restores the retained flag so setup can reuse it instead of getting stuck on an archived flag.
 

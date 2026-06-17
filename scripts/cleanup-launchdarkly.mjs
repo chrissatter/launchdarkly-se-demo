@@ -139,6 +139,10 @@ function experimentStatus(experiment) {
   return experiment.currentIteration?.status || experiment.draftIteration?.status || "not started";
 }
 
+function isRunningExperiment(experiment) {
+  return experimentStatus(experiment).toLowerCase() === "running";
+}
+
 async function archiveExperiment(experiment) {
   if (experiment.archivedDate) {
     console.log(`Already archived experiment: ${experiment.name || experiment.key}`);
@@ -242,6 +246,22 @@ try {
     console.log("Dry run only. No LaunchDarkly resources were deleted.");
     console.log(`To delete the resources above, rerun with LD_CLEANUP_CONFIRM=${CONFIRM_VALUE}.`);
     process.exit(0);
+  }
+
+  const runningExperiments = experiments.filter(isRunningExperiment);
+  if (runningExperiments.length) {
+    console.log("");
+    console.log("Cleanup cannot archive running experiments.");
+    console.log("Stop these experiment(s) in LaunchDarkly, choose the variation to ship, then rerun cleanup:");
+
+    for (const experiment of runningExperiments) {
+      console.log(`- ${experiment.name || experiment.key} (${experiment.key})`);
+    }
+
+    console.log("");
+    console.log("After stopping them, rerun:");
+    console.log(`LD_CLEANUP_CONFIRM=${CONFIRM_VALUE} npm run ld:cleanup`);
+    process.exit(1);
   }
 
   console.log("");
