@@ -146,7 +146,7 @@ The REST script uses LaunchDarkly's API to:
 
 The script prepares the flag, targeting rules, metric, remediation trigger, and chatbot configuration flag. The only remaining LaunchDarkly UI step is starting the experiment iteration in **Extra Credit: Experimentation**.
 
-If setup finds an archived demo flag with the same key, it stops with a recovery message. Restore the flag in the LaunchDarkly UI, or run the REST cleanup flow below and then run setup again.
+If setup finds an archived demo flag with the same key, it restores the flag and continues.
 
 ## Part 1: Release and Remediate
 
@@ -487,6 +487,8 @@ landing-page-cta-clicked
 ```
 
 LaunchDarkly may retain `landing-page-cta-clicked` if an archived experiment still references it. That is safe for reruns because setup will reuse the metric.
+
+LaunchDarkly may also retain `new-landing-page-hero` if an archived experiment still references it. If that happens, cleanup restores the retained flag so setup can reuse it instead of getting stuck on an archived flag.
 
 It does not delete your LaunchDarkly project, environment, API token, or local `.env` file.
 

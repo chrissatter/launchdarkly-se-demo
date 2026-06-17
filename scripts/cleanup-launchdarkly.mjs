@@ -64,6 +64,16 @@ function collectionItems(body) {
   return body?.items || [];
 }
 
+function semanticPatchHeaders() {
+  return {
+    "Content-Type": "application/json; domain-model=launchdarkly.semanticpatch",
+  };
+}
+
+function isArchivedFlag(flag) {
+  return flag?.archived === true || flag?._archived === true || Boolean(flag?.archivedDate);
+}
+
 async function exists(resource) {
   try {
     await ldRequest(resource.path);
@@ -75,6 +85,10 @@ async function exists(resource) {
 
     throw error;
   }
+}
+
+async function getFlag(key) {
+  return ldRequest(`/flags/${PROJECT_KEY}/${key}?filterEnv=${ENV_KEY}`);
 }
 
 async function listExperiments(filter) {
@@ -122,6 +136,30 @@ async function archiveExperiment(experiment) {
   console.log(`Archived experiment: ${experiment.name || experiment.key}`);
 }
 
+async function restoreFlag(key) {
+  await ldRequest(`/flags/${PROJECT_KEY}/${key}`, {
+    method: "PATCH",
+    headers: semanticPatchHeaders(),
+    body: JSON.stringify({
+      comment: "Restore retained LaunchDarkly SE demo flag after cleanup",
+      instructions: [{ kind: "restoreFlag" }],
+    }),
+  });
+
+  console.log(`Restored retained flag: ${key}`);
+}
+
+async function restoreIfArchivedFlag(resource) {
+  if (resource.type !== "flag") {
+    return;
+  }
+
+  const flag = await getFlag(resource.key);
+  if (isArchivedFlag(flag)) {
+    await restoreFlag(resource.key);
+  }
+}
+
 async function deleteResource(resource) {
   try {
     await ldRequest(resource.path, { method: "DELETE" });
@@ -137,6 +175,14 @@ async function deleteResource(resource) {
       console.log(`Retained metric: ${resource.key}`);
       console.log(`  LaunchDarkly still reports this metric as in use: ${error.body?.message || error.message}`);
       console.log("  This is safe for reruns because setup will reuse the existing metric.");
+      return { status: "retained", resource, error };
+    }
+
+    if (resource.type === "flag" && error.status === 409) {
+      console.log(`Retained flag: ${resource.key}`);
+      console.log(`  LaunchDarkly still reports this flag as in use: ${error.body?.message || error.message}`);
+      await restoreIfArchivedFlag(resource);
+      console.log("  This is safe for reruns because setup will reuse the existing flag.");
       return { status: "retained", resource, error };
     }
 

@@ -113,20 +113,6 @@ function isArchivedFlag(flag) {
   return flag?.archived === true || flag?._archived === true || Boolean(flag?.archivedDate);
 }
 
-function assertFlagIsActive(flag, key) {
-  if (!isArchivedFlag(flag)) {
-    return;
-  }
-
-  throw new Error(
-    [
-      `Found archived LaunchDarkly flag ${key}.`,
-      "Restore it in the LaunchDarkly UI, or delete it before rerunning setup.",
-      "If this was created by the demo setup, run npm run ld:cleanup and then npm run ld:setup.",
-    ].join(" "),
-  );
-}
-
 function hasIndividualTarget(envConfig, variationId, variationIndex) {
   return (envConfig.targets || []).some((target) => {
     return (
@@ -238,11 +224,28 @@ async function createAiConfigFlag() {
   });
 }
 
+async function restoreFlag(key) {
+  console.log(`Restoring archived flag ${key}...`);
+
+  return ldRequest(`/flags/${PROJECT_KEY}/${key}`, {
+    method: "PATCH",
+    headers: semanticPatchHeaders(),
+    body: JSON.stringify({
+      comment: "Restore archived LaunchDarkly SE demo flag before setup",
+      instructions: [{ kind: "restoreFlag" }],
+    }),
+  });
+}
+
 async function ensureFlag() {
   const existing = await getFlag();
 
   if (existing) {
-    assertFlagIsActive(existing, FLAG_KEY);
+    if (isArchivedFlag(existing)) {
+      await restoreFlag(FLAG_KEY);
+      return getFlag();
+    }
+
     console.log(`Using existing flag ${FLAG_KEY}.`);
     return existing;
   }
@@ -255,16 +258,18 @@ async function ensureFlag() {
     }
   }
 
-  const flag = await getFlag();
-  assertFlagIsActive(flag, FLAG_KEY);
-  return flag;
+  return getFlag();
 }
 
 async function ensureAiConfigFlag() {
   const existing = await getAiConfigFlag();
 
   if (existing) {
-    assertFlagIsActive(existing, AI_CONFIG_KEY);
+    if (isArchivedFlag(existing)) {
+      await restoreFlag(AI_CONFIG_KEY);
+      return getAiConfigFlag();
+    }
+
     console.log(`Using existing AI config flag ${AI_CONFIG_KEY}.`);
     return existing;
   }
@@ -277,9 +282,7 @@ async function ensureAiConfigFlag() {
     }
   }
 
-  const flag = await getAiConfigFlag();
-  assertFlagIsActive(flag, AI_CONFIG_KEY);
-  return flag;
+  return getAiConfigFlag();
 }
 
 async function patchFlag(instructions, comment) {
