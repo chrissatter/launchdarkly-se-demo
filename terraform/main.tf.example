@@ -22,14 +22,27 @@ variable "environment_key" {
   default = "test"
 }
 
+variable "demo_key_prefix" {
+  type    = string
+  default = ""
+}
+
+locals {
+  key_prefix                    = trim(var.demo_key_prefix, "-")
+  key_prefix_with_separator     = local.key_prefix == "" ? "" : "${local.key_prefix}-"
+  landing_hero_flag_key         = "${local.key_prefix_with_separator}new-landing-page-hero"
+  support_chatbot_ai_config_key = "${local.key_prefix_with_separator}support-chatbot-ai-config"
+  experiment_cohort             = "${local.key_prefix_with_separator}landing-page-q3"
+}
+
 provider "launchdarkly" {
   access_token = var.launchdarkly_access_token
 }
 
 resource "launchdarkly_feature_flag" "landing_hero" {
   project_key = var.project_key
-  key         = "new-landing-page-hero"
-  name        = "new-landing-page-hero"
+  key         = local.landing_hero_flag_key
+  name        = local.landing_hero_flag_key
   description = "LaunchDarkly SE demo flag for safe release, targeting, and remediation."
 
   variation_type = "boolean"
@@ -61,7 +74,7 @@ resource "launchdarkly_feature_flag_environment" "test" {
   flag_id = launchdarkly_feature_flag.landing_hero.id
   env_key = var.environment_key
 
-  on            = true
+  on            = false
   off_variation = 1
 
   fallthrough {
@@ -92,7 +105,7 @@ resource "launchdarkly_feature_flag_environment" "test" {
       context_kind = "user"
       attribute    = "experimentCohort"
       op           = "in"
-      values       = ["landing-page-q3"]
+      values       = [local.experiment_cohort]
       negate       = false
     }
   }
@@ -100,7 +113,7 @@ resource "launchdarkly_feature_flag_environment" "test" {
 
 resource "launchdarkly_feature_flag" "support_chatbot_ai_config" {
   project_key = var.project_key
-  key         = "support-chatbot-ai-config"
+  key         = local.support_chatbot_ai_config_key
   name        = "Support chatbot AI config"
   description = "JSON config flag used as the AgentControl fallback for chatbot prompt and model control."
 
@@ -149,7 +162,7 @@ resource "launchdarkly_feature_flag_environment" "support_chatbot_ai_config_test
   flag_id = launchdarkly_feature_flag.support_chatbot_ai_config.id
   env_key = var.environment_key
 
-  on            = true
+  on            = false
   off_variation = 0
 
   fallthrough {
