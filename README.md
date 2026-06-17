@@ -360,6 +360,16 @@ Escalation threshold
 
 When the config changes in LaunchDarkly, the chatbot panel updates without a code change or redeploy. If you use an AI Config / AgentControl-enabled tenant, map the values above into an AI Config. If not, use the JSON flag fallback created by the REST setup script.
 
+### Enable the AI Config Flag
+
+The REST setup creates `support-chatbot-ai-config` with targeting off. Turn it on before demoing AI config changes or starting an AI config experiment:
+
+1. In LaunchDarkly, open **Features -> Flags -> support-chatbot-ai-config**. If you used `LD_DEMO_KEY_PREFIX`, open the prefixed flag such as `satter-support-chatbot-ai-config`.
+2. Confirm the default rule serves the JSON/config variation you want to show first, usually `concise`.
+3. Turn the flag on.
+4. Click **Review and save**.
+5. Return to the local app. The **AI Config** panel should show the selected variant, model, temperature, and prompt values.
+
 ### Optional AI Experiment
 
 To test prompt and model variants, use metrics based on these app events:
@@ -385,6 +395,8 @@ Split: 50% concise, 50% empathetic
 ```
 
 In the LaunchDarkly experiment design UI, add `chatbot-helpful-clicked` as the primary metric and `chatbot-escalation-clicked` as a second metric. Treat escalation clicks as the metric you do not want to increase. If the UI shows **Targeting rule: Default Rule**, the experiment includes all user contexts that evaluate that flag/config. To restrict the AI experiment to a narrower audience, first add a targeting rule on `support-chatbot-ai-config`, then select that rule in the experiment.
+
+Before starting the AI experiment iteration, make sure `support-chatbot-ai-config` is on and saved. LaunchDarkly will not start the experiment while the selected flag/config is off.
 
 For a reviewer demo, ask the chatbot a support question, switch the config variation in LaunchDarkly, and ask again. The visible model, prompt, and generated response style should change immediately.
 
