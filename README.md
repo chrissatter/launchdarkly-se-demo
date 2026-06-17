@@ -102,14 +102,13 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
 
    Do not use `Reader`. The setup script creates and updates flags, metrics, targeting rules, and a remediation trigger, so read-only access will fail.
 
-5. Run the automated LaunchDarkly setup:
+5. Prepare the automated LaunchDarkly setup values:
 
    ```bash
    export LD_API_TOKEN="api-..."
    export LD_PROJECT_KEY="default"
    export LD_ENV_KEY="test"
    export LD_CREATE_TRIGGER=true
-   npm run ld:setup
    ```
 
    If you are running in a shared reviewer tenant and want to avoid key collisions, add a prefix before running setup:
@@ -119,6 +118,12 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
    ```
 
    With that prefix, the setup script creates resources such as `satter-new-landing-page-hero` and writes matching frontend keys into `.env`.
+
+6. Run the LaunchDarkly tenant setup:
+
+   ```bash
+   npm run ld:setup
+   ```
 
    The script updates `.env` in the current directory with:
 
@@ -133,7 +138,7 @@ Use this path to set up the demo from a fresh GitHub clone. It sets up the local
 
    It does not write `LD_API_TOKEN` to `.env`; keep the token shell-only and out of Git.
 
-6. After setup completes and `.env` has been updated, run the app:
+7. After setup completes and `.env` has been updated, run the app:
 
    ```bash
    npm run dev
