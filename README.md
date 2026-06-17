@@ -180,12 +180,14 @@ To demonstrate release and rollback:
 
 1. Select **Individually targeted beta user** or **Enterprise rule match** in the app's context switcher.
 2. Start with the flag off. The local app should show the control hero and `Raw value: false`.
-3. In LaunchDarkly, turn the flag on. The existing individual target or enterprise rule should serve `true` for the selected context.
+3. In LaunchDarkly, turn the flag on, then click **Review and save** to apply the pending change. The existing individual target or enterprise rule should serve `true` for the selected context.
 4. The app should switch to the new hero and show `Raw value: true`.
 5. Turn the flag off again. Keep the off variation set to `false`.
 6. The app should roll back to the control hero and show `Raw value: false`.
 
-To demonstrate a broad release instead of a targeted release, edit the **Default rule** to serve `true`, then review and save the change. That makes unmatched contexts receive the new experience while the flag is on.
+When using the LaunchDarkly UI, click **Review and save** whenever it appears. Until you save, the local app will continue receiving the previous flag configuration.
+
+To demonstrate a broad release instead of a targeted release, edit the **Default rule** to serve `true`, then click **Review and save**. That makes unmatched contexts receive the new experience while the flag is on.
 
 ### Instant Releases and Rollbacks
 
@@ -223,7 +225,7 @@ The app includes a context switcher in the right-side demo console. Each card ca
 
 The automated setup already creates these targeting examples. If you are configuring LaunchDarkly manually, use:
 
-1. Keep the flag on, but set the default rule to serve `false`.
+1. Set the default rule to serve `false`.
 2. Add an individual target:
 
    ```text
@@ -403,10 +405,12 @@ Use this path if you do not want to run the REST setup script.
 3. Configure release behavior:
 
    ```text
-   Flag targeting: On
+   Flag targeting: Off
    Default rule: serve false
    Off variation: false
    ```
+
+   Starting with targeting off keeps the feature dark until the release demo. Turn the flag on during the demo, then click **Review and save**.
 
 4. Add Part 2 targeting:
 
